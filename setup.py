@@ -14,7 +14,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
-    name="qe-madpno",
+    name="qe-madtequila",
     version="1.0",
     author="Jakob S. Kottmann",
     author_email="jakob.kottmann@utoronto.ca",
@@ -22,7 +22,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="tba",
-    packages=["qemadpno"],
+    packages=["qemadtequila"],
     package_dir={"": "src/python"},
     classifiers=(
         "Programming Language :: Python :: 3",

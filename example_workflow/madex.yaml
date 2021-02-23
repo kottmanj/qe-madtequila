@@ -1,0 +1,38 @@
+# Workflow API version
+apiVersion: io.orquestra.workflow/1.0.0
+
+# Prefix for workflow ID
+name: madex
+
+imports:
+- name: qe-madtequila
+  type: git
+  parameters:
+    repository: "git@github.com:kottmanj/qe-madtequila.git"
+    branch: "main"
+
+steps:
+
+- name: run-madtequila
+  config:
+    runtime:
+      language: python
+      customImage: "kottmanj/madness-tequila"
+      imports: [qe-madtequila]
+      parameters:
+        file: qe-madtequila/steps/run_madness_calculations.py
+        function: make_hamiltonian
+          resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - geometry: "he 0.0 0.0 0.0"
+      type: string
+    - n_pno: 1
+      type: int
+    - transformation: "JordanWigner"
+      type: string
+  outputs:
+    - name: hamiltonian
+      type: hamiltonian

@@ -4,7 +4,6 @@ def make_hamiltonian(geometry, n_pno, **kwargs):
 
     mol = tq.Molecule(geometry=geometry, n_pno=n_pno, **kwargs)
 
-    results_dict = {"schema":"schema"}
     results_dict["info"] = "Result dictionary contains data from a tequila molecule obtained with madness as backend\n
     tequila infostring={}\n\nContent of this dictionary:\n
     hamiltonian:openfermion::QubitOperator\n
