@@ -31,3 +31,4 @@ See Orquestra [docs](http://docs.orquestra.io/) for more
 
 # TODO
 - need to have tequila molecules (at least the madness ones) JSON serializable (so that we can dump and load)
+- make some example workflows (run madness and then do several tq tasks in parallel with the obtained molecule)
