@@ -40,12 +40,14 @@ You don't need this file, but you can modify it and host your own image. Works l
 1. Modify the Dockerfile
 2. Make a docker image (takes a while)
 ```bash
-sudo docker image -t username/imagename:version Dockerfile
+sudo docker image -t username/imagename:version
 ```
 3. Push the image to dockerhub
 ```bash
 sudo docker push username/imagename:version
 ```
 
-The Dockerfile currently uses ubuntu. Starting from another base might be beneficial for lighter containes.  
+If you host your own image on Dockerhub, you need to change it accordingly in your workflows (see the example workflow, and replace `kottmanj/madness-tequila` with `username/imagename:version`.  
+
+The Dockerfile currently uses ubuntu. Starting from another base might be beneficial for lighter containers.  
 For now we are happy with this.  
