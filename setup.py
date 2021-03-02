@@ -28,6 +28,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: Hopefully OS Independent",
     ),
-    install_requires=["z-quantum-core","tequila @ git+https://github.com/aspuru-guzik-group/tequila.git"],
+    install_requires=["z-quantum-core"],
 
 )
