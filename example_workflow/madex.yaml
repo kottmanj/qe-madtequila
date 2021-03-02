@@ -21,7 +21,7 @@ steps:
   config:
     runtime:
       language: python3
-      customImage: "kottmanj/madness-tequila:latest"
+      customImage: "kottmanj/madness-tequila"
       imports: [z-quantum-core, qe-madtequila]
       parameters:
         file: qe-madtequila/steps/run_madtequila.py
