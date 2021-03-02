@@ -14,7 +14,7 @@ imports:
   type: git
   parameters:
     repository: "git@github.com:kottmanj/qe-madtequila.git"
-    branch: "test"
+    branch: "master"
 
 steps:
 - name: runmadtq
