@@ -45,15 +45,13 @@ RUN export MKLROOT=/opt/intel/compilers_and_libraries/linux/mkl
 
 RUN wget https://dl.bintray.com/boostorg/release/1.73.0/source/boost_1_73_0.tar.bz2
 RUN tar --bzip2 -xf boost_1_73_0.tar.bz2
-RUN export BOOSTROOT=$(realpath boost_1_73_0)
+ENV BOOSTROOT=$(realpath boost_1_73_0)
 
 RUN git clone https://github.com/dpilger26/NumCpp.git numcpp
-RUN export NUMCPPROOT=$(realpath numcpp)
+ENV NUMCPPROOT=$(realpath numcpp)
 
 RUN git clone https://github.com/kottmanj/madness.git madsrc
 RUN mkdir madroot
-
-RUN echo "$NUMCPPROOT, $BOOSTROOT"
 
 RUN cmake -D ENABLE_MKL=ON -D MKL_ROOT_DIR=/opt/intel/compilers_and_libraries/linux/mkl -D CMAKE_CXX_FLAGS="-O3 -DNDEBUG -march=native -I/app/numcpp/include/ -I/app/boost_1_73_0/"  madsrc -Bmadroot
 RUN make -C madroot
@@ -61,7 +59,7 @@ RUN make -C madroot
 RUN ln -s /madroot/src/apps/pno/pno_integrals /usr/bin/pno_integrals
 
 # export the madness root dir, so that tq can find the executable automatically
-RUN export MAD_ROOT_DIR=$(realpath madroot)
+ENV MAD_ROOT_DIR=$(realpath madroot)
 
 # install tequila
 # PyPi version is fine here
@@ -69,5 +67,10 @@ RUN python -m pip install tequila-basic
 # let's enable qulacs as well
 # so that we can do most tasks beyond simply running madness in reasonable time
 RUN python -m pip install qulacs
+
+# make sure the orquestra python will find theese installations
+# will be a problem if they update python ... for another day
+ENV PYTHONPATH=/usr/local/lib/python3.7/dist-packages/:${PYTHONPATH}
+
 
 ENTRYPOINT bash
