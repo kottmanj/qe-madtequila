@@ -63,6 +63,11 @@ def mol_to_json(mol):
 def mol_from_json(json_data:dict, name=None, **kwargs):
     print(type(json_data))
     print(json_data)
+
+    if hasattr(json_data, "lower") and ".json" in json_data.lower():
+        with open(json_data, "r") as f:
+            json_data = json.load(f)
+
     if json_data is not dict:
         json_dict = json.loads(json_data)
     else:
