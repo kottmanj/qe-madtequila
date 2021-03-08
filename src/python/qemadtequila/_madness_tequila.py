@@ -61,6 +61,8 @@ def mol_to_json(mol):
     return json.dumps(mol, indent=2, cls=TqMadnessMoleculeEncoder)
 
 def mol_from_json(json_data:dict, name=None, **kwargs):
+    print(type(json_data))
+    print(json_data)
     if json_data is not dict:
         json_dict = json.loads(json_data)
     parameters = json_dict["parameters"]
