@@ -31,7 +31,7 @@ def compute_pno_upccd(madmolecule, **kwargs):
     result = qemadtq.tq.minimize(E, **kwargs)
 
     energy = result.energy
-    with open("final_energy", "w") as f:
+    with open("final_energy.json", "w") as f:
         f.write(json.dumps(energy, indent=2))
 
 if __name__ == "__main__":
