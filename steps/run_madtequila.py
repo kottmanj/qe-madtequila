@@ -21,7 +21,7 @@ def make_qubit_operator(madmolecule, transformation="JordanWigner", **kwargs):
     mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
     H = mol.make_hamiltonian()
 
-def compute_pno_upccd(madmolcule, **kwargs):
+def compute_pno_upccd(madmolecule, **kwargs):
     # madmolecule is the result of run_madness
     # re-initialize tq molecule
     mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)

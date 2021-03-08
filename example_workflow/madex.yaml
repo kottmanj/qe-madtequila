@@ -17,7 +17,7 @@ imports:
     branch: "jsk"
 
 steps:
-- name: runmadtq
+- name: run-madness
   config:
     runtime:
       language: python3
@@ -26,10 +26,6 @@ steps:
       parameters:
         file: qe-madtequila/steps/run_madtequila.py
         function: run_madness
-      resources:
-      cpu: "1000m"
-      memory: "1Gi"
-      disk: "10Gi"
   inputs:
     - geometry: "he 0.0 0.0 0.0"
       type: string
@@ -38,6 +34,21 @@ steps:
   outputs:
     - name: madmolecule
       type: madmolecule
-
+- name: compute-pno-upccd
+  passed: [run-madness]
+  config:
+    runtime:
+      language: python3
+      customImage: "kottmanj/madness-tequila"
+      imports: [qe-madtequila]
+      parameters:
+        file: qe-madtequila/steps/run_madtequila.py
+        function: compute_pno_upccd
+  inputs:
+     - madmolecule: ((run-madness.madmolecule)) 
+       type: madmolecule
+  outputs:
+     - name: final_energy
+       type: float
 types:
   - madmolecule
