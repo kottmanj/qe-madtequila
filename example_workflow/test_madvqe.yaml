@@ -83,7 +83,7 @@ steps:
       memory: "1Gi"
       disk: "10Gi"
   inputs:
-    - geometry: ((create-molecule.molecule))
+    - molgeometry: ((create-molecule.molecule))
       type: molecular-geometry
   outputs:
     - name: geometry
