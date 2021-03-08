@@ -60,7 +60,7 @@ class TqMadnessMoleculeEncoder(json.JSONEncoder):
 def mol_to_json(mol):
     return json.dumps(mol, indent=2, cls=TqMadnessMoleculeEncoder)
 
-def mol_from_json(json_data:dict, name=None):
+def mol_from_json(json_data:dict, name=None, **kwargs):
     if json_data is not dict:
         json_dict = json.loads(json_data)
     parameters = json_dict["parameters"]
@@ -84,4 +84,4 @@ def mol_from_json(json_data:dict, name=None):
         print("nuclear_repulsion={}".format(json_dict["nuclear_repulsion"]), file=f)
         print("occinfo={}".format(occinfo), file=f)
     
-    return tq.Molecule(n_pno=None, **parameters)
+    return tq.Molecule(n_pno=None, **parameters, **kwargs)
