@@ -35,5 +35,5 @@ def compute_pno_upccd(madmolecule, **kwargs):
         f.write(json.dumps(energy, indent=2))
 
 if __name__ == "__main__":
-    run_madness("he 0.0 0.0 0.0", None)
+    run_madness("he 0.0 0.0 0.0", 1)
     compute_pno_upccd(madmolecule="madmolecule.json")

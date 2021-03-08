@@ -33,10 +33,9 @@ def run_madness(geometry, n_pno, mra_threshold=1.e-4, localize="boys", orthogona
 
 class TqMadnessMoleculeEncoder(json.JSONEncoder):
     def default(self, mol):
-        print("whats up ", type(mol))
         one_body_integrals = mol.compute_one_body_integrals()
         one_body_integrals = {"shape":list(one_body_integrals.shape), "data":[float(x) for x in one_body_integrals.flatten()]}
-        two_body_integrals = mol.compute_one_body_integrals()
+        two_body_integrals = mol.compute_two_body_integrals()
         two_body_integrals = {"shape":list(two_body_integrals.shape), "data":[float(x) for x in two_body_integrals.flatten()]}
         nuc_rep = float(mol.molecule.nuclear_repulsion)
         orbital_data = self.encode_pnoinfo(mol.orbitals)
@@ -87,8 +86,8 @@ def mol_from_json(json_data:str, name=None, **kwargs):
     one_body_integrals=numpy.asarray(obi_data["data"], dtype=float).reshape(obi_data["shape"])
     tbi_data=json_dict["two_body_integrals"]
     two_body_integrals=numpy.asarray(tbi_data["data"], dtype=float).reshape(tbi_data["shape"])
-    numpy.save("one_body_integrals.npy", arr=one_body_integrals)
-    numpy.save("two_body_integrals.npy", arr=two_body_integrals)
+    numpy.save("{}_htensor.npy".format(name), arr=one_body_integrals)
+    numpy.save("{}_gtensor.npy".format(name), arr=two_body_integrals)
     orbital_data = json_dict["orbital_data"]
     pairinfo = orbital_data["pairinfo"] 
     occinfo = orbital_data["occinfo"] 
