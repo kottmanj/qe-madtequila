@@ -70,6 +70,7 @@ steps:
     - name: molecule
       type: molecular-geometry
 - name: create-tequila-molecule
+  passed: [create-molecule]
   config:
     runtime:
       language: python3
@@ -82,7 +83,7 @@ steps:
       memory: "1Gi"
       disk: "10Gi"
   inputs:
-    - name: molecule
+    - geometry: ((create-molecule.molecule))
       type: molecular-geometry
   outputs:
     - name: geometry
