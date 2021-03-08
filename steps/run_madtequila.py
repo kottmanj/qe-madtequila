@@ -34,6 +34,16 @@ def compute_pno_upccd(madmolecule, **kwargs):
     with open("final_energy.json", "w") as f:
         f.write(json.dumps(energy, indent=2))
 
+def make_qubit_operator(madmolecule, **kwargs):
+    mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
+    from zquantum.core.openfermion import save_interaction_operator # has import errors, probably issues with numpy>=1.20
+    H = mol.make_hamiltonian()
+    # leaving this here since it might be useful to know
+    # h = mol.compute_one_body_integrals() # actually get function in this case
+    # g = mol.compute_two_body_integrals() # same
+    qubit_operator = H.to_openfermion()
+    save_interaction_operator(hamiltonian, "hamiltonian.json")
+
 if __name__ == "__main__":
     run_madness("he 0.0 0.0 0.0", 1)
     compute_pno_upccd(madmolecule="madmolecule.json")

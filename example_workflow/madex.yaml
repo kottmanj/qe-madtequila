@@ -50,5 +50,22 @@ steps:
   outputs:
      - name: final_energy
        type: float
+- name: convert-to-of
+  passed: [run-madness]
+  config:
+          runtime:
+                  language: python3
+                  customImage: "kottmanj/madness-tequila"
+                  imports: [qe-madtequila, qe-zquantum-core]
+                  parameters:
+                          file: qe-madtequila/steps/run_madtequila.py
+                          function: get_openfermion_hamiltonian
+  inputs:
+          - madmolecule: ((run-madness.madmolecule))
+            type: madmolecule
+  outputs:
+          - name: hamiltonian
+            type: hamiltonian
 types:
   - madmolecule
+  - hamiltonian
