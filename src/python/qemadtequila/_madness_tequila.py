@@ -73,6 +73,10 @@ def mol_from_json(json_data:dict, name=None, **kwargs):
     else:
         parameters["name"]=name
     del parameters["multiplicity"]
+
+    if "mol" in json_dict:
+        json_dict=json_dict["mol"]
+
     obi_data=json_dict["one_body_integrals"]
     one_body_integrals=numpy.asarray(obi_data["data"], dtype=float).reshape(obi_data["shape"])
     tbi_data=json_dict["two_body_integrals"]
