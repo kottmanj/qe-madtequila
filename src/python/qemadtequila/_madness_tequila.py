@@ -65,6 +65,8 @@ def mol_from_json(json_data:dict, name=None, **kwargs):
     print(json_data)
     if json_data is not dict:
         json_dict = json.loads(json_data)
+    else:
+        json_dict = json_data
     parameters = json_dict["parameters"]
     if name is None:
         name=parameters["name"]
