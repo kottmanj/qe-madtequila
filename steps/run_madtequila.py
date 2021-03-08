@@ -24,7 +24,7 @@ def make_qubit_operator(madmolecule, transformation="JordanWigner", **kwargs):
 def compute_pno_upccd(madmolecule, **kwargs):
     # madmolecule is the result of run_madness
     # re-initialize tq molecule
-    mol = qemadtq.mol_from_json(madmolecule.mol, transformation="JordanWigner", **kwargs)
+    mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
     H = mol.make_hamiltonian()
     U = mol.make_pno_upccgsd_ansatz()
     E = tq.ExpectationValue(H=H, U=U)
