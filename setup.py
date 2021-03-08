@@ -28,6 +28,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: Hopefully OS Independent",
     ),
-    install_requires=["ruamel"],
+    install_requires=["ruamel.yaml"],
 
 )
