@@ -60,18 +60,21 @@ class TqMadnessMoleculeEncoder(json.JSONEncoder):
 def mol_to_json(mol):
     return json.dumps(mol, indent=2, cls=TqMadnessMoleculeEncoder)
 
-def mol_from_json(json_data:dict, name=None, **kwargs):
-    print(type(json_data))
-    print(json_data)
+def mol_from_json(json_data:str, name=None, **kwargs):
 
     if hasattr(json_data, "lower") and ".json" in json_data.lower():
         with open(json_data, "r") as f:
-            json_data = json.load(f)
-
-    if json_data is not dict:
+            json_dict = json.load(f)
+            print(type(json_dict))
+            print(json_dict)
+    elif hasattr(json_data, "lower()"):
         json_dict = json.loads(json_data)
     else:
         json_dict = json_data
+
+    if "mol" in json_dict:
+        json_dict=json.loads(json_dict["mol"])
+        
     parameters = json_dict["parameters"]
     if name is None:
         name=parameters["name"]
@@ -79,8 +82,6 @@ def mol_from_json(json_data:dict, name=None, **kwargs):
         parameters["name"]=name
     del parameters["multiplicity"]
 
-    if "mol" in json_dict:
-        json_dict=json_dict["mol"]
 
     obi_data=json_dict["one_body_integrals"]
     one_body_integrals=numpy.asarray(obi_data["data"], dtype=float).reshape(obi_data["shape"])

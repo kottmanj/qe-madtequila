@@ -27,13 +27,13 @@ def compute_pno_upccd(madmolecule, **kwargs):
     mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
     H = mol.make_hamiltonian()
     U = mol.make_pno_upccgsd_ansatz()
-    E = tq.ExpectationValue(H=H, U=U)
-    result = tq.minimize(E, **kwargs)
+    E = qemadtq.tq.ExpectationValue(H=H, U=U)
+    result = qemadtq.tq.minimize(E, **kwargs)
 
     energy = result.energy
     with open("final_energy", "w") as f:
-        f.write(json_dumps(energy, indent=2))
+        f.write(json.dumps(energy, indent=2))
 
 if __name__ == "__main__":
-
-    compute_pno_upccd(madmolecule)
+    run_madness("he 0.0 0.0 0.0", None)
+    compute_pno_upccd(madmolecule="madmolecule.json")
