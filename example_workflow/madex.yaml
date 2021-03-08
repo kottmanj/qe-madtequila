@@ -22,7 +22,7 @@ steps:
     runtime:
       language: python3
       customImage: "kottmanj/madness-tequila"
-      imports: [qe-madtequila]
+      imports: [qe-madtequila, z-quantum-core]
       parameters:
         file: qe-madtequila/steps/run_madtequila.py
         function: run_madness
@@ -40,7 +40,7 @@ steps:
     runtime:
       language: python3
       customImage: "kottmanj/madness-tequila"
-      imports: [qe-madtequila]
+      imports: [qe-madtequila, z-quantum-core]
       parameters:
         file: qe-madtequila/steps/run_madtequila.py
         function: compute_pno_upccd
@@ -56,10 +56,10 @@ steps:
           runtime:
                   language: python3
                   customImage: "kottmanj/madness-tequila"
-                  imports: [qe-madtequila, qe-zquantum-core]
+                  imports: [qe-madtequila, z-quantum-core]
                   parameters:
                           file: qe-madtequila/steps/run_madtequila.py
-                          function: get_openfermion_hamiltonian
+                          function: make_qubit_operator
   inputs:
           - madmolecule: ((run-madness.madmolecule))
             type: madmolecule
