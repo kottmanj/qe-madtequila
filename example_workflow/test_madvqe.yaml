@@ -1,0 +1,141 @@
+# Workflow API version
+apiVersion: io.orquestra.workflow/1.0.0
+
+# Prefix for workflow ID
+name: vqe-h2-example
+
+imports:
+- name: z-quantum-core
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/z-quantum-core.git"
+    branch: "master"
+- name: qe-openfermion
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/qe-openfermion.git"
+    branch: "master"
+- name: z-quantum-vqe
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/z-quantum-vqe.git"
+    branch: "master"
+- name: z-quantum-optimizers
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/z-quantum-optimizers.git"
+    branch: "master"
+- name: diatomic-molecule
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/tutorial-1-diatomic-molecule.git"
+    branch: "master"
+- name: qe-psi4
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/qe-psi4.git"
+    branch: "master"
+- name: qe-forest
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/qe-forest.git"
+    branch: "master"
+- name: qe-madtequila
+  type: git
+  parameters:
+    repository: "git@github.com:kottmanj/qe-madtequila.git"
+    branch: "master"
+
+steps:
+- name: create-molecule
+  config:
+    runtime:
+      language: python3
+      imports: [diatomic-molecule]
+      parameters:
+        file: diatomic-molecule/diatomicmolecule.py
+        function: create_diatomic_molecule
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - species1: "H"
+      type: string
+    - species2: "H"
+      type: string
+    - bond_length: 0.7
+      type: float
+  outputs:
+    - name: molecule
+      type: molecular-geometry
+- name: create-tequila-molecule
+  config:
+    runtime:
+      language: python3
+      imports: [qe-madtequila]
+      parameters:
+        file: qe-madtequila/create_tequila_molecule/dict_to_molecule.py
+        function: dict_to_molecule
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - name: molecule
+      type: molecular-geometry
+  outputs:
+    - name: geometry
+      type: string
+- name: run-psi4
+  passed: [create-molecule]
+  config:
+    runtime:
+      language: psi4
+      customImage: "zapatacomputing/qe-psi4"
+      imports: [z-quantum-core, qe-openfermion, qe-psi4]
+      parameters:
+        file: qe-psi4/steps/run_psi4_calculations.py
+        function: run_psi4
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - basis: "STO-3G"
+      type: string
+    - method: "scf"
+      type: string
+    - reference: "rhf"
+      type: string
+    - geometry: ((create-molecule.molecule))
+      type: molecular-geometry
+    - freeze_core: False
+      type: bool
+    - charge: 0
+      type: int
+    - multiplicity: 1
+      type: int
+    - save_hamiltonian: True
+      type: bool
+    - n_active_extract: "None"
+      type: string
+    - n_occupied_extract: "None"
+      type: string
+    - freeze_core_extract: False
+      type: bool
+    - nthreads: 4
+      type: int
+    - n_active: "None"
+      type: string
+    - options: "None"
+      type: string
+    - wavefunction: "None"
+      type: string
+  outputs:
+    - name: hamiltonian
+      type: hamiltonian
+
+types:
+  - molecular-geometry
+  - hamiltonian
