@@ -16,7 +16,7 @@ def run_madness(geometry, n_pno, mra_threshold=1.e-4, localize="boys", orthogona
     if "pnoint" in kwargs:
         pnoint = {**pnoint, **kwargs["pnoint"]}
 
-    kwargs["pno"]=pno
+    kwargs["pnoint"]=pnoint
     kwargs["dft"]=dft
 
     #exe = tq.quantumchemistry.QuantumChemistryMadness.find_executable("/app/madroot/")

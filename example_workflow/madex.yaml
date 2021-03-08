@@ -36,8 +36,8 @@ steps:
     - n_pno: 1
       type: int
   outputs:
-    - name: madresults
-      type: madresults
+    - name: madmolecule
+      type: madmolecule
 
 types:
-  - madresults
+  - madmolecule
