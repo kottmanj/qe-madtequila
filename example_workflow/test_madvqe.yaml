@@ -86,7 +86,7 @@ steps:
     - molgeometry: ((create-molecule.molecule))
       type: molecular-geometry
   outputs:
-    - name: geometry
+    - name: geometry_str
       type: string
 - name: run-psi4
   passed: [create-molecule]
