@@ -3,7 +3,7 @@ import qemadtequila as qemadtq
 from os import PathLike
 from typing import Union, Dict
 import numpy
-SCHEMA_VERSION="schema"
+SCHEMA_VERSION=qemadtq.SCHEMA_VERSION
 
 AnyPath = Union[str, bytes, PathLike]
 

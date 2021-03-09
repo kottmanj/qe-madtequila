@@ -5,6 +5,7 @@ import tequila as tq
 import os
 import json
 import numpy
+SCHEMA_VERSION="schema"
 
 def run_madness(geometry, n_pno, mra_threshold=1.e-4, localize="boys", orthogonalization_method="cholesky", diagonal=True, maxrank=None, **kwargs):
     """
