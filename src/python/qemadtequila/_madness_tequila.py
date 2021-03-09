@@ -97,5 +97,5 @@ def mol_from_json(json_data:str, name=None, **kwargs):
         print("pairinfo={}".format(pairinfo), file=f)
         print("nuclear_repulsion={}".format(json_dict["nuclear_repulsion"]), file=f)
         print("occinfo={}".format(occinfo), file=f)
-
-    return tq.Molecule(n_pno=None, **parameters, **kwargs)
+    mol = tq.Molecule(n_pno=None, **parameters, **kwargs)
+    return mol
