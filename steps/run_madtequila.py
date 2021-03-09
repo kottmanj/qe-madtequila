@@ -49,17 +49,17 @@ def compute_pno_upccd(madmolecule, **kwargs):
     with open("final_energy.json", "w") as f:
         f.write(json.dumps(energy, indent=2))
 
-"""def save_interaction_operator(interaction_operator: InteractionOperator, filename: AnyPath) -> None:
-    Save an interaction operator to file.
+def save_interaction_operator(interaction_operator: InteractionOperator, filename: AnyPath) -> None:
+    """Save an interaction operator to file.
     Args:
         interaction_operator (InteractionOperator): the operator to be saved
         filename (str): the name of the file
-    
+    """
 
     with open(filename, "w") as f:
         f.write(
             json.dumps(convert_interaction_op_to_dict(interaction_operator), indent=2)
-        )"""
+        )
 
 def convert_interaction_op_to_dict(op: InteractionOperator) -> dict:
     """Convert an InteractionOperator to a dictionary.
@@ -94,7 +94,7 @@ def convert_array_to_dict(array: numpy.ndarray) -> dict:
     return dictionary
 
 def make_qubit_operator(madmolecule, **kwargs):
-    from zquantum.core.openfermion import save_interaction_operator # import problems in combination with custom image, use the function only with standard runtime
+    #from zquantum.core.openfermion import save_interaction_operator # import problems in combination with custom image, use the function only with standard runtime
     mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
     hamiltonian = mol.make_molecular_hamiltonian()
     # leaving this here since it might be useful to know
