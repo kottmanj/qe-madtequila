@@ -6,8 +6,17 @@ import os
 import json
 import numpy
 
-def run_madness(geometry, n_pno, mra_threshold=1.e-4, localize="boys", orthogonalization_method="cholesky", **kwargs):
-
+def run_madness(geometry, n_pno, mra_threshold=1.e-4, localize="boys", orthogonalization_method="cholesky", diagonal=True, maxrank=None, **kwargs):
+    """
+    geometry: a string that either points to an xyz file (e.g. geometry="my_file.xyz") or carries the molecular structure
+              in xyz syntax (without the preamble, e.g. geometry="H 0.0 0.0 0.0\nH 0.0 0.0 0.7")
+    n_pno: number of pnos to compute (number of qubits is then 2*n_pno + n_electrons)
+    mra_threshold: MRA accuracy threshold (1.e-4 is usually fine)
+    localize: localization method ("boys", "pm", "canon")
+    orthogonalization_method: Global orthogonalization of the PNOs ("cholesky", "symmetric")
+    diagonal: Apply a diagonal approximation to the MP2 surrogate (only compute diagonal pairs)
+    maxrank: maximum number of PNOs computed for each MP2 pair (not the number picked in the end; in some cases it's good to be able to control that)
+    """
     dft={"econv":mra_threshold, "localize":localize}
     if "dft" in kwargs:
         dft = {**dft, **kwargs["dft"]}
@@ -16,8 +25,16 @@ def run_madness(geometry, n_pno, mra_threshold=1.e-4, localize="boys", orthogona
     if "pnoint" in kwargs:
         pnoint = {**pnoint, **kwargs["pnoint"]}
 
+    pno={"thresh":mra_threshold, "diagonal":diagonal}
+    if "pno" in kwargs:
+        pno = {**pno, **kwargs["pno"]}
+
+    if maxrank is not None:
+        pno["maxrank"]=maxrank
+
     kwargs["pnoint"]=pnoint
     kwargs["dft"]=dft
+    kwargs["pno"]=pno
 
 
     #exe = tq.quantumchemistry.QuantumChemistryMadness.find_executable("/app/madroot/")
@@ -99,3 +116,48 @@ def mol_from_json(json_data:str, name=None, **kwargs):
         print("occinfo={}".format(occinfo), file=f)
     mol = tq.Molecule(n_pno=None, **parameters, **kwargs)
     return mol
+
+
+def save_interaction_operator(interaction_operator, filename) -> None:
+    """Save an interaction operator to file.
+    Args:
+        interaction_operator (InteractionOperator): the operator to be saved
+        filename (str): the name of the file
+    """
+
+    with open(filename, "w") as f:
+        f.write(
+            json.dumps(convert_interaction_op_to_dict(interaction_operator), indent=2)
+        )
+
+def convert_interaction_op_to_dict(op) -> dict:
+    """Convert an InteractionOperator to a dictionary.
+    Args:
+        op (openfermion.ops.InteractionOperator): the operator
+    Returns:
+        dictionary (dict): the dictionary representation
+    """
+
+    dictionary = {"schema": SCHEMA_VERSION + "-interaction_op"}
+    dictionary["constant"] = convert_array_to_dict(numpy.array(op.constant))
+    dictionary["one_body_tensor"] = convert_array_to_dict(numpy.array(op.one_body_tensor))
+    dictionary["two_body_tensor"] = convert_array_to_dict(numpy.array(op.two_body_tensor))
+
+    return dictionary
+
+def convert_array_to_dict(array: numpy.ndarray) -> dict:
+    """Convert a numpy array to a dictionary.
+    Args:
+        array (numpy.array): a numpy array
+    Returns:
+        dictionary (dict): the dict containing the data
+    """
+
+    dictionary = {}
+    if numpy.iscomplexobj(array):
+        dictionary["real"] = array.real.tolist()
+        dictionary["imag"] = array.imag.tolist()
+    else:
+        dictionary["real"] = array.tolist()
+
+    return dictionary
