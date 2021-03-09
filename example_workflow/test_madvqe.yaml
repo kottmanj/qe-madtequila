@@ -141,8 +141,109 @@ steps:
   outputs:
       - name: hamiltonian
         type: hamiltonian
+- name: transform-hamiltonian
+  passed: [convert-to-of]
+  config:
+    runtime:
+      language: python3
+      imports: [z-quantum-core]
+      parameters:
+        file: z-quantum-core/steps/transforms.py
+        function: transform_interaction_operator
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - transformation: "Jordan-Wigner"
+      type: string
+    - input_operator: ((run-psi4.hamiltonian))
+      type: hamiltonian
+  outputs:
+    - name: transformed-operator
+      type: qubit-operator
+- name: generate-random-ansatz-params
+  config:
+    runtime:
+      language: python3
+      imports: [z-quantum-core, z-quantum-vqe]
+      parameters:
+        file: z-quantum-core/steps/circuit.py
+        function: generate_random_ansatz_params
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - ansatz_specs:
+        module_name: zquantum.vqe.singlet_uccsd
+        function_name: SingletUCCSDAnsatz
+        number_of_spatial_orbitals: 2
+        number_of_alpha_electrons: 1
+        transformation: Jordan-Wigner
+      type: specs
+    - min_value: -0.01
+      type: float
+    - max_value: 0.01
+      type: float
+    - seed: 9
+      type: int
+  outputs:
+    - name: params
+      type: ansatz-params
+- name: optimize-circuit
+  passed: [transform-hamiltonian, generate-random-ansatz-params]
+  config:
+    runtime:
+      language: python3
+      imports: [z-quantum-core, z-quantum-optimizers, qe-forest, z-quantum-vqe]
+      parameters:
+        file: z-quantum-optimizers/steps/optimizers.py
+        function: optimize_variational_circuit
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - ansatz_specs:
+        module_name: zquantum.vqe.singlet_uccsd
+        function_name: SingletUCCSDAnsatz
+        number_of_spatial_orbitals: 2
+        number_of_alpha_electrons: 1
+        transformation: Jordan-Wigner
+      type: specs
+    - backend_specs:
+        module_name: qeforest.simulator
+        function_name: ForestSimulator
+        device_name: wavefunction-simulator
+      type: specs
+    - optimizer_specs:
+        module_name: zquantum.optimizers.scipy_optimizer
+        function_name: ScipyOptimizer
+        method: L-BFGS-B
+      type: specs
+    - cost_function_specs:
+        module_name: zquantum.core.cost_function
+        function_name: AnsatzBasedCostFunction
+        estimator-specs:
+          module_name: zquantum.core.estimator
+          function_name: ExactEstimator
+      type: specs
+    - qubit_operator: ((transform-hamiltonian.transformed-operator))
+      type: qubit-operator
+    - initial_parameters: ((generate-random-ansatz-params.params))
+      type: ansatz-params
+  outputs:
+    - name: optimization-results
+      type: opt-results
+    - name: optimized-parameters
+      type: ansatz-params
 
 types:
   - molecular-geometry
-  - madmolecule
   - hamiltonian
+  - madmolecule
+  - qubit-operator
+  - ansatz-params
+  - opt-results
+  - specs
