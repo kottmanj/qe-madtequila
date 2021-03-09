@@ -94,7 +94,7 @@ steps:
     runtime:
       language: python3
       customImage: "kottmanj/madness-tequila"
-      imports: [qe-madtequila]
+      imports: [z-quantum-core, qe-madtequila, qe-openfermion]
       parameters:
         file: qe-madtequila/steps/run_madtequila.py
         function: make_qubit_operator
