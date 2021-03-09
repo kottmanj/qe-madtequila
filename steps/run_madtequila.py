@@ -7,7 +7,11 @@ from openfermion import (
     SymbolicOperator,
     InteractionRDM,
 )
+from os import PathLike
+from typing import Union
 SCHEMA_VERSION="schema"
+
+AnyPath = Union[str, bytes, PathLike]
 
 def run_madness(geometry, n_pno):
     geometry_str = None
@@ -44,9 +48,7 @@ def compute_pno_upccd(madmolecule, **kwargs):
     with open("final_energy.json", "w") as f:
         f.write(json.dumps(energy, indent=2))
 
-def save_interaction_operator(
-    interaction_operator: InteractionOperator, filename: AnyPath
-) -> None:
+def save_interaction_operator(interaction_operator: InteractionOperator, filename: AnyPath) -> None:
     """Save an interaction operator to file.
     Args:
         interaction_operator (InteractionOperator): the operator to be saved
