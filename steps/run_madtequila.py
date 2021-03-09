@@ -94,14 +94,17 @@ def convert_array_to_dict(array: numpy.ndarray) -> dict:
 
     return dictionary
 
-def make_qubit_operator(madmolecule, **kwargs):
+def make_interaction_operator(madmolecule, **kwargs):
     #from zquantum.core.openfermion import save_interaction_operator # import problems in combination with custom image, use the function only with standard runtime
     mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
     hamiltonian = mol.make_molecular_hamiltonian()
     # leaving this here since it might be useful to know
     # h = mol.compute_one_body_integrals() # actually get function in this case
     # g = mol.compute_two_body_integrals() # same
-    #hamiltonian = H.to_openfermion()
+
+    # there is an issue with importing ans using the save_interaction_operator function
+    # from zquantum.core.openfermion, due to some depencdencies so we copied the functions
+    # here to work around that
     save_interaction_operator(hamiltonian, "hamiltonian.json")
 
 if __name__ == "__main__":

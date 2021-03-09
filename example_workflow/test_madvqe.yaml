@@ -115,7 +115,7 @@ steps:
       imports: [qe-madtequila, z-quantum-core]
       parameters:
         file: qe-madtequila/steps/run_madtequila.py
-        function: make_qubit_operator
+        function: make_interaction_operator
   inputs:
       - madmolecule: ((run-madness.madmolecule))
         type: madmolecule
