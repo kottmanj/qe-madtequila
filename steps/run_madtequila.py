@@ -8,7 +8,7 @@ from openfermion import (
     InteractionRDM,
 )
 from os import PathLike
-from typing import Union
+from typing import Union, Dict
 import numpy
 SCHEMA_VERSION="schema"
 
