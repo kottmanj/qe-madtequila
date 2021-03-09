@@ -1,6 +1,8 @@
 # Orquestra Resource To Run Madness with Tequila
 - uses the docker container:  [kottmanj/tequila-madness](https://dockerhub.com/kottmanj/tequila-madness)
-- example workflow is provided in [example_workflow](example_workflow)
+- example workflows are provided in [examples](examples)
+- implementations follow [doi.org/10.1021/acs.jpclett.0c03410](https://doi.org/10.1021/acs.jpclett.0c03410)
+- `tequila` is installed on the custom image and does not need to be added as a requirement in `setup.py` (can be done, but then the `path.append` command in [src/python/qemadtequila/_madness_tequila.py](src/python/qemadtequila/_madness_tequila.py) should be commented out)
 
 # Extending/Improving this
 - make a fork of this repo
@@ -27,7 +29,9 @@ qe get workflow WORKFLOW-ID
 qe get logs WORKFLOW-ID -s STEP-ID
 ```
 
-See Orquestra [docs](http://docs.orquestra.io/) for more
+See Orquestra [docs](http://docs.orquestra.io/) for more.  
+
+If you are running from your own fork, adapt the corresponding parts in resource definition of the workflows (see example workflows).
 
 # TODO
 - need to have tequila molecules (at least the madness ones) JSON serializable (so that we can dump and load)
