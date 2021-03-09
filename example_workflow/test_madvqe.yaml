@@ -97,7 +97,7 @@ steps:
       imports: [qe-madtequila]
       parameters:
         file: qe-madtequila/steps/run_madtequila.py
-        function: run_madness
+        function: make_qubit_operator
       resources:
       cpu: "1000m"
       memory: "1Gi"
@@ -108,9 +108,9 @@ steps:
     - n_pno: 1
       type: int
   outputs:
-    - name: madresults
-      type: madresults
+    - name: hamiltonian
+      type: hamiltonian
 
 types:
   - molecular-geometry
-  - madresults
+  - hamiltonian

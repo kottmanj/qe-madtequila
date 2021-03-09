@@ -26,9 +26,9 @@ def run_madness(geometry, n_pno):
     with open("madresults.json", "w") as f:
         f.write(json.dumps(results_dict, indent=2))
 
-def make_qubit_operator(geometry, n_pno, transformation):
+def make_qubit_operator(geometry, n_pno):
     from zquantum.core.openfermion import save_interaction_operator # has import errors, probably issues with numpy>=1.20
-    mol = qemadtq.run_madness(geometry=geometry, n_pno=n_pno)
+    mol = run_madness(geometry=geometry, n_pno=n_pno)
     H = mol.make_hamiltonian()
     qubit_operator = H.to_openfermion()
     save_interaction_operator(hamiltonian, "hamiltonian.json")
