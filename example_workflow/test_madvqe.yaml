@@ -128,18 +128,18 @@ steps:
 - name: convert-to-of
   passed: [run-madness]
   config:
-          runtime:
-                  language: python3
-                  imports: [qe-madtequila, z-quantum-core]
-                  parameters:
-                          file: qe-madtequila/steps/run_madtequila.py
-                          function: make_qubit_operator
+    runtime:
+      language: python3
+      imports: [qe-madtequila, z-quantum-core]
+      parameters:
+        file: qe-madtequila/steps/run_madtequila.py
+        function: make_qubit_operator
   inputs:
-          - madmolecule: ((run-madness.madmolecule))
-            type: madmolecule
+      - madmolecule: ((run-madness.madmolecule))
+        type: madmolecule
   outputs:
-          - name: hamiltonian
-            type: hamiltonian
+      - name: hamiltonian
+        type: hamiltonian
 
 types:
   - molecular-geometry
