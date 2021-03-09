@@ -1,9 +1,9 @@
 import json
-import qemadtequila as qemadtq
+import qemadtequila as madtq
 from os import PathLike
 from typing import Union, Dict
 import numpy
-SCHEMA_VERSION=qemadtq.SCHEMA_VERSION
+SCHEMA_VERSION=madtq.SCHEMA_VERSION
 
 AnyPath = Union[str, bytes, PathLike]
 
@@ -16,7 +16,7 @@ def run_madness(geometry, n_pno, **kwargs):
               the geometry string is in xyz format without the preamble e.g.
               "H 0.0 0.0 0.0\nH 0.0 0.0 0.7"
     n_pno: number of pnos that shall be used for the qubit hamiltonian
-    kwargs: other keyword arguments for the tequila-madness interface (see also qemadtq.run_madness)
+    kwargs: other keyword arguments for the tequila-madness interface (see also madtq.run_madness)
     """
     
     molgeometry=None
@@ -36,13 +36,13 @@ def run_madness(geometry, n_pno, **kwargs):
             )
 
     kwargs = {}
-    mol = qemadtq.run_madness(geometry=geometry_str, n_pno=n_pno, **kwargs)
+    mol = madtq.run_madness(geometry=geometry_str, n_pno=n_pno, **kwargs)
     results_dict = {}
     results_dict["schema"] = SCHEMA_VERSION + "-madresults"
     results_dict["kwargs"] = kwargs
     results_dict["geometry"] = geometry
     results_dict["n_pno"] = n_pno
-    json_string = qemadtq.mol_to_json(mol)
+    json_string = madtq.mol_to_json(mol)
     results_dict["mol"]=json_string
     with open("madmolecule.json", "w") as f:
         f.write(json.dumps(results_dict, indent=2))
@@ -55,11 +55,11 @@ def compute_pno_upccd(madmolecule, **kwargs):
     """
     # madmolecule is the result of run_madness
     # re-initialize tq molecule
-    mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
+    mol = madtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
     H = mol.make_hamiltonian()
     U = mol.make_pno_upccgsd_ansatz()
-    E = qemadtq.tq.ExpectationValue(H=H, U=U)
-    result = qemadtq.tq.minimize(E, **kwargs)
+    E = madtq.tq.ExpectationValue(H=H, U=U)
+    result = madtq.tq.minimize(E, **kwargs)
 
     energy = result.energy
     with open("final_energy.json", "w") as f:
@@ -67,7 +67,7 @@ def compute_pno_upccd(madmolecule, **kwargs):
 
 def make_interaction_operator(madmolecule, **kwargs):
     #from zquantum.core.openfermion import save_interaction_operator # import problems in combination with custom image, use the function only with standard runtime
-    mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
+    mol = madtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
     hamiltonian = mol.make_molecular_hamiltonian()
     # leaving this here since it might be useful to know
     # h = mol.compute_one_body_integrals() # actually get function in this case
@@ -76,7 +76,7 @@ def make_interaction_operator(madmolecule, **kwargs):
     # there is an issue with importing ans using the save_interaction_operator function
     # from zquantum.core.openfermion, due to some depencdencies so we copied the functions
     # here to work around that
-    qemadtq.save_interaction_operator(hamiltonian, "hamiltonian.json")
+    madtq.save_interaction_operator(hamiltonian, "hamiltonian.json")
 
 if __name__ == "__main__":
     run_madness("he 0.0 0.0 0.0", 1)
