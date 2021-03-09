@@ -50,11 +50,11 @@ def compute_pno_upccd(madmolecule, **kwargs):
         f.write(json.dumps(energy, indent=2))
 
 """def save_interaction_operator(interaction_operator: InteractionOperator, filename: AnyPath) -> None:
-    """Save an interaction operator to file.
+    Save an interaction operator to file.
     Args:
         interaction_operator (InteractionOperator): the operator to be saved
         filename (str): the name of the file
-    """
+    
 
     with open(filename, "w") as f:
         f.write(
