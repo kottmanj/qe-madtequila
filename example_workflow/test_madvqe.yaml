@@ -93,7 +93,7 @@ steps:
   config:
     runtime:
       language: python3
-      customImage: "AbhinavUofT/madness-tequila"
+      customImage: "kottmanj/madness-tequila"
       imports: [qe-madtequila]
       parameters:
         file: qe-madtequila/steps/run_madtequila.py
