@@ -22,7 +22,7 @@ steps:
     runtime:
       language: python3
       customImage: "kottmanj/madness-tequila"
-      imports: [qe-madtequila]
+      imports: [qe-madtequila, z-quantum-core]
       parameters:
         file: qe-madtequila/steps/run_madtequila.py
         function: run_madness
@@ -45,7 +45,7 @@ steps:
         file: qe-madtequila/steps/run_madtequila.py
         function: compute_pno_upccd
   inputs:
-     - madmolecule: ((run-madness.madmolecule)) 
+     - madmolecule: ((run-madness.madmolecule))
        type: madmolecule
   outputs:
      - name: final_energy

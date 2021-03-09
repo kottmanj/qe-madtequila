@@ -2,7 +2,7 @@ import sys
 # activate the path to tequila on the madness-tequila docker image
 sys.path.append("/usr/local/lib/python3.7/dist-packages/")
 import tequila as tq
-import os 
+import os
 import json
 import numpy
 
@@ -48,13 +48,13 @@ class TqMadnessMoleculeEncoder(json.JSONEncoder):
         pairinfo=""
         occinfo=""
         for orbital in orbitals:
-           p = orbital.pno_pair 
+           p = orbital.pno_pair
            if len(p)==1:
                pairinfo+="{},".format(*p)
            elif len(p)==2:
                pairinfo+="{}.{},".format(*p)
            occinfo += "{},".format(orbital.occ)
-    
+
         return {"pairinfo":pairinfo.rstrip(","), "occinfo":occinfo.rstrip(",")}
 
 def mol_to_json(mol):
@@ -74,7 +74,7 @@ def mol_from_json(json_data:str, name=None, **kwargs):
 
     if "mol" in json_dict:
         json_dict=json.loads(json_dict["mol"])
-        
+
     parameters = json_dict["parameters"]
     if name is None:
         name=parameters["name"]
@@ -90,12 +90,12 @@ def mol_from_json(json_data:str, name=None, **kwargs):
     numpy.save("{}_htensor.npy".format(name), arr=one_body_integrals)
     numpy.save("{}_gtensor.npy".format(name), arr=two_body_integrals)
     orbital_data = json_dict["orbital_data"]
-    pairinfo = orbital_data["pairinfo"] 
-    occinfo = orbital_data["occinfo"] 
+    pairinfo = orbital_data["pairinfo"]
+    occinfo = orbital_data["occinfo"]
     with open("{}_pnoinfo.txt".format(name), "w") as f:
         print("MADNESS MRA-PNO INFORMATION", file=f)
         print("pairinfo={}".format(pairinfo), file=f)
         print("nuclear_repulsion={}".format(json_dict["nuclear_repulsion"]), file=f)
         print("occinfo={}".format(occinfo), file=f)
-    
-    return tq.Molecule(n_pno=None, **parameters, **kwargs)
+    mol = tq.Molecule(n_pno=None, **parameters, **kwargs)
+    return mol
