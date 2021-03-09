@@ -15,9 +15,16 @@ SCHEMA_VERSION="schema"
 AnyPath = Union[str, bytes, PathLike]
 
 def run_madness(geometry, n_pno):
-    geometry_str = None
+    molgeometry = None
     with open(geometry) as f:
-        geometry_str = json.load(f)
+        molgeometry = json.load(f)
+
+    geometry_str = ""
+    for atom in molgeometry["sites"]:
+        geometry_str += "{} {} {} {}\n".format(
+            atom["species"], atom["x"], atom["y"], atom["z"]
+        )
+
     kwargs = {}
     mol = qemadtq.run_madness(geometry=geometry_str, n_pno=n_pno)
     results_dict = {}
@@ -29,12 +36,6 @@ def run_madness(geometry, n_pno):
     results_dict["mol"]=json_string
     with open("madmolecule.json", "w") as f:
         f.write(json.dumps(results_dict, indent=2))
-
-def make_qubit_operator(madmolecule, transformation="JordanWigner", **kwargs):
-    # madmolecule is the result of run_madness
-    # re-initialize tq molecule
-    mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
-    H = mol.make_hamiltonian()
 
 def compute_pno_upccd(madmolecule, **kwargs):
     # madmolecule is the result of run_madness

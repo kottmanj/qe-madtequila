@@ -69,27 +69,8 @@ steps:
   outputs:
     - name: molecule
       type: molecular-geometry
-- name: create-tequila-molecule
-  passed: [create-molecule]
-  config:
-    runtime:
-      language: python3
-      imports: [qe-madtequila]
-      parameters:
-        file: qe-madtequila/create_tequila_molecule/dict_to_molecule.py
-        function: dict_to_molecule
-    resources:
-      cpu: "1000m"
-      memory: "1Gi"
-      disk: "10Gi"
-  inputs:
-    - molgeometry: ((create-molecule.molecule))
-      type: molecular-geometry
-  outputs:
-    - name: geometry_str
-      type: string
 - name: run-madness
-  passed: [create-tequila-molecule]
+  passed: [create-molecule]
   config:
     runtime:
       language: python3
@@ -99,8 +80,8 @@ steps:
         file: qe-madtequila/steps/run_madtequila.py
         function: run_madness
   inputs:
-    - geometry: ((create-tequila-molecule.geometry_str))
-      type: string
+    - geometry: ((create-molecule.molecule))
+      type: molecular-geometry
     - n_pno: 1
       type: int
   outputs:
