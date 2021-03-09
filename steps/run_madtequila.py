@@ -100,7 +100,7 @@ def make_qubit_operator(madmolecule, **kwargs):
     # leaving this here since it might be useful to know
     # h = mol.compute_one_body_integrals() # actually get function in this case
     # g = mol.compute_two_body_integrals() # same
-    qubit_operator = H.to_openfermion()
+    hamiltonian = H.to_openfermion()
     save_interaction_operator(hamiltonian, "hamiltonian.json")
 
 if __name__ == "__main__":
