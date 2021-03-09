@@ -18,15 +18,22 @@ def run_madness(geometry, n_pno, **kwargs):
     n_pno: number of pnos that shall be used for the qubit hamiltonian
     kwargs: other keyword arguments for the tequila-madness interface (see also qemadtq.run_madness)
     """
-    molgeometry = None
-    with open(geometry) as f:
-        molgeometry = json.load(f)
-
+    
+    molgeometry=None
     geometry_str = ""
-    for atom in molgeometry["sites"]:
-        geometry_str += "{} {} {} {}\n".format(
-            atom["species"], atom["x"], atom["y"], atom["z"]
-        )
+    if "sites" in geometry:
+        molgeometry = geometry
+    elif ".json" in geometry:
+        with open(geometry) as f:
+            molgeometry = json.load(f)
+    else:
+        geometry_str = geometry
+    
+    if molgeometry is not None:
+        for atom in molgeometry["sites"]:
+            geometry_str += "{} {} {} {}\n".format(
+                atom["species"], atom["x"], atom["y"], atom["z"]
+            )
 
     kwargs = {}
     mol = qemadtq.run_madness(geometry=geometry_str, n_pno=n_pno, **kwargs)
