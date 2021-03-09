@@ -19,7 +19,7 @@ imports:
   type: git
   parameters:
     repository: "git@github.com:kottmanj/qe-madtequila.git"
-    branch: "jsk"
+    branch: "master"
 
 steps:
 - name: run-madness
