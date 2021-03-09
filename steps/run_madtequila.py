@@ -9,6 +9,7 @@ from openfermion import (
 )
 from os import PathLike
 from typing import Union
+import numpy
 SCHEMA_VERSION="schema"
 
 AnyPath = Union[str, bytes, PathLike]
@@ -69,13 +70,13 @@ def convert_interaction_op_to_dict(op: InteractionOperator) -> dict:
     """
 
     dictionary = {"schema": SCHEMA_VERSION + "-interaction_op"}
-    dictionary["constant"] = convert_array_to_dict(np.array(op.constant))
-    dictionary["one_body_tensor"] = convert_array_to_dict(np.array(op.one_body_tensor))
-    dictionary["two_body_tensor"] = convert_array_to_dict(np.array(op.two_body_tensor))
+    dictionary["constant"] = convert_array_to_dict(numpy.array(op.constant))
+    dictionary["one_body_tensor"] = convert_array_to_dict(numpy.array(op.one_body_tensor))
+    dictionary["two_body_tensor"] = convert_array_to_dict(numpy.array(op.two_body_tensor))
 
     return dictionary
 
-def convert_array_to_dict(array: np.ndarray) -> dict:
+def convert_array_to_dict(array: numpy.ndarray) -> dict:
     """Convert a numpy array to a dictionary.
     Args:
         array (numpy.array): a numpy array
@@ -84,7 +85,7 @@ def convert_array_to_dict(array: np.ndarray) -> dict:
     """
 
     dictionary = {}
-    if np.iscomplexobj(array):
+    if numpy.iscomplexobj(array):
         dictionary["real"] = array.real.tolist()
         dictionary["imag"] = array.imag.tolist()
     else:
