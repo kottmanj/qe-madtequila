@@ -157,7 +157,7 @@ steps:
   inputs:
     - transformation: "Jordan-Wigner"
       type: string
-    - input_operator: ((run-psi4.hamiltonian))
+    - input_operator: ((convert-to-of.hamiltonian))
       type: hamiltonian
   outputs:
     - name: transformed-operator
