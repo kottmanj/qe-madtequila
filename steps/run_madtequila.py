@@ -1,10 +1,13 @@
 import json
 import qemadtequila as qemadtq
-SCHEMA_VERSION="schema" 
+SCHEMA_VERSION="schema"
 
 def run_madness(geometry, n_pno):
+    geometry_str = None
+    with open(geometry) as f:
+        geometry_str = json.load(f)
     kwargs = {}
-    mol = qemadtq.run_madness(geometry=geometry, n_pno=n_pno)
+    mol = qemadtq.run_madness(geometry=geometry_str, n_pno=n_pno)
     results_dict = {}
     results_dict["schema"] = SCHEMA_VERSION + "-madresults"
     results_dict["info"] = """
@@ -29,4 +32,3 @@ def make_qubit_operator(geometry, n_pno, transformation):
     H = mol.make_hamiltonian()
     qubit_operator = H.to_openfermion()
     save_interaction_operator(hamiltonian, "hamiltonian.json")
-
