@@ -47,5 +47,6 @@ sudo docker image -t username/imagename:version Dockerfile
 sudo docker push username/imagename:version
 ```
 
-The Dockerfile currently uses ubuntu. Starting from another base might be beneficial for lighter containes.  
-For now we are happy with this.  
+If you host your own image on Dockerhub, you need to change it accordingly in your workflows (see the example workflow, and replace `kottmanj/madness-tequila` with `username/imagename:version`.  
+
+The Dockerfile currently uses ubuntu. Starting from another base might be beneficial for lighter containers.  
