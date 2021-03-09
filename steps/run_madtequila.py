@@ -1,5 +1,12 @@
 import json
 import qemadtequila as qemadtq
+from openfermion import (
+    InteractionOperator,
+    QubitOperator,
+    IsingOperator,
+    SymbolicOperator,
+    InteractionRDM,
+)
 SCHEMA_VERSION="schema"
 
 def run_madness(geometry, n_pno):
@@ -37,8 +44,54 @@ def compute_pno_upccd(madmolecule, **kwargs):
     with open("final_energy.json", "w") as f:
         f.write(json.dumps(energy, indent=2))
 
+def save_interaction_operator(
+    interaction_operator: InteractionOperator, filename: AnyPath
+) -> None:
+    """Save an interaction operator to file.
+    Args:
+        interaction_operator (InteractionOperator): the operator to be saved
+        filename (str): the name of the file
+    """
+
+    with open(filename, "w") as f:
+        f.write(
+            json.dumps(convert_interaction_op_to_dict(interaction_operator), indent=2)
+        )
+
+def convert_interaction_op_to_dict(op: InteractionOperator) -> dict:
+    """Convert an InteractionOperator to a dictionary.
+    Args:
+        op (openfermion.ops.InteractionOperator): the operator
+    Returns:
+        dictionary (dict): the dictionary representation
+    """
+
+    dictionary = {"schema": SCHEMA_VERSION + "-interaction_op"}
+    dictionary["constant"] = convert_array_to_dict(np.array(op.constant))
+    dictionary["one_body_tensor"] = convert_array_to_dict(np.array(op.one_body_tensor))
+    dictionary["two_body_tensor"] = convert_array_to_dict(np.array(op.two_body_tensor))
+
+    return dictionary
+
+def convert_array_to_dict(array: np.ndarray) -> dict:
+    """Convert a numpy array to a dictionary.
+    Args:
+        array (numpy.array): a numpy array
+    Returns:
+        dictionary (dict): the dict containing the data
+    """
+
+    dictionary = {}
+    if np.iscomplexobj(array):
+        dictionary["real"] = array.real.tolist()
+        dictionary["imag"] = array.imag.tolist()
+    else:
+        dictionary["real"] = array.tolist()
+
+    return dictionary
+
 def make_qubit_operator(madmolecule, **kwargs):
-    from zquantum.core.openfermion import save_interaction_operator # import problems in combination with custom image, use the function only with standard runtime
+    #from zquantum.core.openfermion import save_interaction_operator # import problems in combination with custom image, use the function only with standard runtime
     mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
     H = mol.make_hamiltonian()
     # leaving this here since it might be useful to know
