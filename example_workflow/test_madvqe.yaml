@@ -88,55 +88,29 @@ steps:
   outputs:
     - name: geometry_str
       type: string
-- name: run-psi4
-  passed: [create-molecule]
+- name: runmadtq
+  passed: [create-tequila-molecule]
   config:
     runtime:
-      language: psi4
-      customImage: "zapatacomputing/qe-psi4"
-      imports: [z-quantum-core, qe-openfermion, qe-psi4]
+      language: python3
+      customImage: "AbhinavUofT/madness-tequila"
+      imports: [qe-madtequila]
       parameters:
-        file: qe-psi4/steps/run_psi4_calculations.py
-        function: run_psi4
-    resources:
+        file: qe-madtequila/steps/run_madtequila.py
+        function: run_madness
+      resources:
       cpu: "1000m"
       memory: "1Gi"
       disk: "10Gi"
   inputs:
-    - basis: "STO-3G"
+    - geometry: ((create-tequila-molecule.geometry_str))
       type: string
-    - method: "scf"
-      type: string
-    - reference: "rhf"
-      type: string
-    - geometry: ((create-molecule.molecule))
-      type: molecular-geometry
-    - freeze_core: False
-      type: bool
-    - charge: 0
+    - n_pno: 1
       type: int
-    - multiplicity: 1
-      type: int
-    - save_hamiltonian: True
-      type: bool
-    - n_active_extract: "None"
-      type: string
-    - n_occupied_extract: "None"
-      type: string
-    - freeze_core_extract: False
-      type: bool
-    - nthreads: 4
-      type: int
-    - n_active: "None"
-      type: string
-    - options: "None"
-      type: string
-    - wavefunction: "None"
-      type: string
   outputs:
-    - name: hamiltonian
-      type: hamiltonian
+    - name: madresults
+      type: madresults
 
 types:
   - molecular-geometry
-  - hamiltonian
+  - madresults
