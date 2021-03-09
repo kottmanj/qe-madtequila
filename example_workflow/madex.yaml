@@ -52,7 +52,7 @@ steps:
        type: float
 # there is an issue with the import of zquantum.core and using a custom image
 # problems with importing ruamel from the pyquil dependenices
-# at this point here we don't need madness anymore, so this is the workaround
+# we however need tequila (and therefore the custom image) since I would prefer to use the same versions
 - name: convert-to-of
   passed: [run-madness]
   config:
