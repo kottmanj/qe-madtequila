@@ -1,6 +1,6 @@
 # Orquestra Resource To Run Madness with Tequila
 - uses the docker container:  [kottmanj/tequila-madness](https://dockerhub.com/kottmanj/tequila-madness)
-- example workflows are provided in [example_workflow](example_workflow)
+- example workflows are provided in [examples](examples)
 - implementations follow [doi.org/10.1021/acs.jpclett.0c03410](https://doi.org/10.1021/acs.jpclett.0c03410)
 
 # Extending/Improving this

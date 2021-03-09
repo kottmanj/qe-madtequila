@@ -1,0 +1,227 @@
+# Workflow API version
+apiVersion: io.orquestra.workflow/1.0.0
+
+# Prefix for workflow ID
+name: vqe-h2-example
+
+imports:
+- name: z-quantum-core
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/z-quantum-core.git"
+    branch: "master"
+- name: qe-openfermion
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/qe-openfermion.git"
+    branch: "master"
+- name: z-quantum-vqe
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/z-quantum-vqe.git"
+    branch: "master"
+- name: z-quantum-optimizers
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/z-quantum-optimizers.git"
+    branch: "master"
+- name: diatomic-molecule
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/tutorial-1-diatomic-molecule.git"
+    branch: "master"
+- name: qe-psi4
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/qe-psi4.git"
+    branch: "master"
+- name: qe-forest
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/qe-forest.git"
+    branch: "master"
+- name: qe-madtequila
+  type: git
+  parameters:
+    repository: "git@github.com:kottmanj/qe-madtequila.git"
+    branch: "master"
+
+steps:
+- name: create-molecule
+  config:
+    runtime:
+      language: python3
+      imports: [diatomic-molecule]
+      parameters:
+        file: diatomic-molecule/diatomicmolecule.py
+        function: create_diatomic_molecule
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - species1: "H"
+      type: string
+    - species2: "H"
+      type: string
+    - bond_length: 0.7
+      type: float
+  outputs:
+    - name: molecule
+      type: molecular-geometry
+- name: run-madness
+  passed: [create-molecule]
+  config:
+    runtime:
+      language: python3
+      customImage: "kottmanj/madness-tequila"
+      imports: [qe-madtequila, z-quantum-core]
+      parameters:
+        file: qe-madtequila/steps/run_madtequila.py
+        function: run_madness
+  inputs:
+    - geometry: ((create-molecule.molecule))
+      type: molecular-geometry
+    - n_pno: 1
+      type: int
+  outputs:
+    - name: madmolecule
+      type: madmolecule
+- name: compute-pno-upccd
+  passed: [run-madness]
+  config:
+    runtime:
+      language: python3
+      customImage: "kottmanj/madness-tequila"
+      imports: [qe-madtequila, z-quantum-core]
+      parameters:
+        file: qe-madtequila/steps/run_madtequila.py
+        function: compute_pno_upccd
+  inputs:
+     - madmolecule: ((run-madness.madmolecule))
+       type: madmolecule
+  outputs:
+     - name: final_energy
+       type: float
+- name: convert-to-of
+  passed: [run-madness]
+  config:
+    runtime:
+      language: python3
+      customImage: "kottmanj/madness-tequila"
+      imports: [qe-madtequila, z-quantum-core]
+      parameters:
+        file: qe-madtequila/steps/run_madtequila.py
+        function: make_interaction_operator
+  inputs:
+      - madmolecule: ((run-madness.madmolecule))
+        type: madmolecule
+  outputs:
+      - name: hamiltonian
+        type: hamiltonian
+- name: transform-hamiltonian
+  passed: [convert-to-of]
+  config:
+    runtime:
+      language: python3
+      imports: [z-quantum-core]
+      parameters:
+        file: z-quantum-core/steps/transforms.py
+        function: transform_interaction_operator
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - transformation: "Jordan-Wigner"
+      type: string
+    - input_operator: ((convert-to-of.hamiltonian))
+      type: hamiltonian
+  outputs:
+    - name: transformed-operator
+      type: qubit-operator
+- name: generate-random-ansatz-params
+  config:
+    runtime:
+      language: python3
+      imports: [z-quantum-core, z-quantum-vqe]
+      parameters:
+        file: z-quantum-core/steps/circuit.py
+        function: generate_random_ansatz_params
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - ansatz_specs:
+        module_name: zquantum.vqe.singlet_uccsd
+        function_name: SingletUCCSDAnsatz
+        number_of_spatial_orbitals: 2
+        number_of_alpha_electrons: 1
+        transformation: Jordan-Wigner
+      type: specs
+    - min_value: -0.01
+      type: float
+    - max_value: 0.01
+      type: float
+    - seed: 9
+      type: int
+  outputs:
+    - name: params
+      type: ansatz-params
+- name: optimize-circuit
+  passed: [transform-hamiltonian, generate-random-ansatz-params]
+  config:
+    runtime:
+      language: python3
+      imports: [z-quantum-core, z-quantum-optimizers, qe-forest, z-quantum-vqe]
+      parameters:
+        file: z-quantum-optimizers/steps/optimizers.py
+        function: optimize_variational_circuit
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+      disk: "10Gi"
+  inputs:
+    - ansatz_specs:
+        module_name: zquantum.vqe.singlet_uccsd
+        function_name: SingletUCCSDAnsatz
+        number_of_spatial_orbitals: 2
+        number_of_alpha_electrons: 1
+        transformation: Jordan-Wigner
+      type: specs
+    - backend_specs:
+        module_name: qeforest.simulator
+        function_name: ForestSimulator
+        device_name: wavefunction-simulator
+      type: specs
+    - optimizer_specs:
+        module_name: zquantum.optimizers.scipy_optimizer
+        function_name: ScipyOptimizer
+        method: L-BFGS-B
+      type: specs
+    - cost_function_specs:
+        module_name: zquantum.core.cost_function
+        function_name: AnsatzBasedCostFunction
+        estimator-specs:
+          module_name: zquantum.core.estimator
+          function_name: ExactEstimator
+      type: specs
+    - qubit_operator: ((transform-hamiltonian.transformed-operator))
+      type: qubit-operator
+    - initial_parameters: ((generate-random-ansatz-params.params))
+      type: ansatz-params
+  outputs:
+    - name: optimization-results
+      type: opt-results
+    - name: optimized-parameters
+      type: ansatz-params
+
+types:
+  - molecular-geometry
+  - hamiltonian
+  - madmolecule
+  - qubit-operator
+  - ansatz-params
+  - opt-results
+  - specs
