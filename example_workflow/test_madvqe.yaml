@@ -88,29 +88,60 @@ steps:
   outputs:
     - name: geometry_str
       type: string
-- name: runmadtq
+- name: run-madness
   passed: [create-tequila-molecule]
   config:
     runtime:
       language: python3
       customImage: "kottmanj/madness-tequila"
-      imports: [z-quantum-core, qe-madtequila]
+      imports: [qe-madtequila, z-quantum-core]
       parameters:
         file: qe-madtequila/steps/run_madtequila.py
-        function: make_qubit_operator
-      resources:
-      cpu: "1000m"
-      memory: "1Gi"
-      disk: "10Gi"
+        function: run_madness
   inputs:
     - geometry: ((create-tequila-molecule.geometry_str))
       type: string
     - n_pno: 1
       type: int
   outputs:
-    - name: hamiltonian
-      type: hamiltonian
+    - name: madmolecule
+      type: madmolecule
+- name: compute-pno-upccd
+  passed: [run-madness]
+  config:
+    runtime:
+      language: python3
+      customImage: "kottmanj/madness-tequila"
+      imports: [qe-madtequila, z-quantum-core]
+      parameters:
+        file: qe-madtequila/steps/run_madtequila.py
+        function: compute_pno_upccd
+  inputs:
+     - madmolecule: ((run-madness.madmolecule))
+       type: madmolecule
+  outputs:
+     - name: final_energy
+       type: float
+# there is an issue with the import of zquantum.core and using a custom image
+# problems with importing ruamel from the pyquil dependenices
+# we however need tequila (and therefore the custom image) since I would prefer to use the same versions
+- name: convert-to-of
+  passed: [run-madness]
+  config:
+          runtime:
+                  language: python3
+                  imports: [qe-madtequila, z-quantum-core]
+                  parameters:
+                          file: qe-madtequila/steps/run_madtequila.py
+                          function: make_qubit_operator
+  inputs:
+          - madmolecule: ((run-madness.madmolecule))
+            type: madmolecule
+  outputs:
+          - name: hamiltonian
+            type: hamiltonian
 
 types:
   - molecular-geometry
+  - madmolecule
   - hamiltonian
