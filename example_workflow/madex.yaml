@@ -50,12 +50,14 @@ steps:
   outputs:
      - name: final_energy
        type: float
+# there is an issue with the import of zquantum.core and using a custom image
+# problems with importing ruamel from the pyquil dependenices
+# at this point here we don't need madness anymore, so this is the workaround
 - name: convert-to-of
   passed: [run-madness]
   config:
           runtime:
                   language: python3
-                  customImage: "kottmanj/madness-tequila"
                   imports: [qe-madtequila, z-quantum-core]
                   parameters:
                           file: qe-madtequila/steps/run_madtequila.py

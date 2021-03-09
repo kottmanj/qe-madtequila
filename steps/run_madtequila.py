@@ -1,7 +1,6 @@
 import json
 import qemadtequila as qemadtq
 SCHEMA_VERSION="schema" 
-from zquantum.core.openfermion import save_interaction_operator # has import errors, probably issues with numpy>=1.20
 
 def run_madness(geometry, n_pno, **kwargs):
 
@@ -36,6 +35,7 @@ def compute_pno_upccd(madmolecule, **kwargs):
         f.write(json.dumps(energy, indent=2))
 
 def make_qubit_operator(madmolecule, **kwargs):
+    from zquantum.core.openfermion import save_interaction_operator # import problems in combination with custom image, use the function only with standard runtime
     mol = qemadtq.mol_from_json(madmolecule, transformation="JordanWigner", **kwargs)
     H = mol.make_hamiltonian()
     # leaving this here since it might be useful to know
