@@ -78,6 +78,49 @@ def make_interaction_operator(madmolecule, **kwargs):
     # here to work around that
     madtq.save_interaction_operator(hamiltonian, "hamiltonian.json")
 
+def optimize_measurements(circuit:str, hamiltonian:str):
+    """
+    Use the tequila implementation of the grouping Algorithm from T.C Yen et.al. 
+    circuit: open-qasm-2 string
+    hamiltonian: openfermion::QubitOperator or tequila hamiltonian as string
+    """
+
+    try: 
+        H = madtq.tq.QubitHamiltonian.from_string(hamiltonian, openfermion_format=True)
+    except:
+        H = madtq.tq.QubitHamiltonian.from_string(hamiltonian)
+    U = madtq.tq.import_open_qasm(circuit)
+
+    # optimize_measurements will decompose the expectation value
+    # into a sum of expectation values with transformed circuits
+    # and Hamiltonians that are build from Pauli-Z only
+    E = madtq.tq.ExpectationValue(H=H, U=U, optimize_measurements=True)
+
+    # now pull the circuits out and give them back as qasm lists
+    # note that the measurement optimization will change the circuits (adding basis rotations)
+    result = {"schema":"schema", "measurement_count":E.count_expectationvalues()}
+    groups = []
+    for expv in E.get_expectationvalues():
+        # summation doesn't do much here
+        # note that this hamiltonian is an all-z hamiltonian (one measurement)
+        h = sum(expv.H, 0.0)
+        h = h.to_openfermion()
+        u = madtq.tq.export_open_qasm(expv.U)
+        groups.append({"circuit":u,"hamiltonian":str(h)})
+    result["groups"]=groups
+    with open("groupings.json", "w") as f:
+        f.write(json.dumps(result, indent=2))
+
+
+    
+
+
+
+
+
 if __name__ == "__main__":
-    run_madness("he 0.0 0.0 0.0", 1)
-    compute_pno_upccd(madmolecule="madmolecule.json")
+    #run_madness("he 0.0 0.0 0.0", 1)
+    #compute_pno_upccd(madmolecule="madmolecule.json")
+    U = madtq.tq.gates.Ry(angle="a", target=0) + madtq.tq.gates.CNOT(0,1)
+    qasm = madtq.tq.export_open_qasm(U, variables={"a":1.0})
+    optimize_measurements(circuit=qasm, hamiltonian="1.0*X(0)+2.0*X(0)Y(1)")
