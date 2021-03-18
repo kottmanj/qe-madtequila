@@ -71,6 +71,43 @@ steps:
   outputs:
       - name: hamiltonian
         type: hamiltonian
+- name: create-qubit-hamiltonian
+  passed: [run-madness]
+  config:
+          runtime:
+                  language: python3
+                  customImage: "kottmanj/madness-tequila"
+                  imports: [qe-madtequila]
+                  parameters:
+                    file: qe-madtequila/steps/run_madtequila.py
+                    function: make_qubit_hamiltonian
+  inputs:
+          - madmolecule: ((run-madness.madmolecule))
+          - type: madmolecule
+          - transformation: "symmetry_conserving_bravyi_kitaev"
+          - type: string
+  outputs:
+          - name: qubit_hamiltonian
+          - type: qubit_hamiltonian 
+- name: optimize-measurements
+  passed: [create-qubit-hamiltonian]
+  config:
+          runtime:
+                  language: python3
+                  customImage: "kottmanj/madness-tequila"
+                  imports: [qe-madtequila]
+                  parameters:
+                    file: qe-madtequila/steps/run_madtequila.py
+                    function: optimize_measurements
+  inputs:
+          - madmolecule: ((create-qubit-hamiltonian.qubit_hamiltonian))
+          - type: qubit_hamiltonian
+  outputs:
+          - name: measurement_groups
+          - type: measurement_groups
+
 types:
   - madmolecule
   - hamiltonian
+  - qubit_hamiltonian
+  - measurement_groups
