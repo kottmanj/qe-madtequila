@@ -78,6 +78,82 @@ def make_interaction_operator(madmolecule, **kwargs):
     # here to work around that
     madtq.save_interaction_operator(hamiltonian, "hamiltonian.json")
 
+def make_qubit_hamiltonian(madmolecule, transformation="jordanwigner", **kwargs):
+    # take a madmolecule and create a qubit-operator
+    # export as string
+    mol = madtq.mol_from_json(madmolecule, transformation=transformation, **kwargs)
+    hamiltonian = mol.make_hamiltonian()
+    result = {"schema":"schema"}
+    # if you want openfermion strings: str(hamiltonian.to_openfermion())
+    result["qubit_hamiltonian"]=str(hamiltonian)
+    with open("qubit_hamiltonian.json", "w") as f:
+        f.write(json.dumps(result, indent=2))
+
+def load_json(x:str):
+    if ".json" in x:
+        with open(x) as f:
+            y = json.load(f)
+        return y
+    elif isinstance(x, str):
+        return json.loads(x)
+    else:
+        return x
+
+def optimize_measurements(qubit_hamiltonian:str, circuit:str=None):
+    """
+    Use the tequila implementation of the grouping Algorithm from T.C Yen et.al. 
+    circuit: open-qasm-2 string; if no circuit is given we will create an empty one
+    hamiltonian: openfermion::QubitOperator or tequila hamiltonian as string
+
+    Rerurn: A json dictionary with "measurement_count":total number of optimized measurments
+    "groupings":a list of dictionary containing 'circuit' (qasm str) and 'hamiltonian':openfermion_string
+    if no circuit was given, the circuits in the grouping list contain only the basis changes
+    """
+    
+    # get strings from json
+    hamiltonian = load_json(qubit_hamiltonian)["qubit_hamiltonian"]
+     
+    # convert to tq objects
+    try: 
+        H = madtq.tq.QubitHamiltonian.from_string(hamiltonian, openfermion_format=True)
+    except:
+        H = madtq.tq.QubitHamiltonian.from_string(hamiltonian)
+    
+    if circuit is None:
+        U = madtq.tq.QCircuit()
+    else:
+        circuit = load_json(circuit)["circuit"]
+        U = madtq.tq.import_open_qasm(circuit)
+
+    # optimize_measurements will decompose the expectation value
+    # into a sum of expectation values with transformed circuits
+    # and Hamiltonians that are build from Pauli-Z only
+    # in tequila this objective can be used like any other
+    # in the following we will extract it's components in order to 
+    # potentially use them outside of tequila
+    E = madtq.tq.ExpectationValue(H=H, U=U, optimize_measurements=True)
+
+    # now pull the circuits out and give them back as qasm lists
+    # note that the measurement optimization will change the circuits (adding basis rotations)
+    result = {"schema":"schema", "measurement_count":E.count_expectationvalues()}
+    groups = []
+    for expv in E.get_expectationvalues():
+        # summation doesn't do much here
+        # note that this hamiltonian is an all-z hamiltonian (one measurement)
+        h = sum(expv.H, 0.0)
+        h = h.to_openfermion()
+        u = madtq.tq.export_open_qasm(expv.U)
+        groups.append({"circuit":u,"hamiltonian":str(h)})
+    result["groups"]=groups
+    with open("measurement_groups.json", "w") as f:
+        f.write(json.dumps(result, indent=2))
+
+    return result
+  
 if __name__ == "__main__":
-    run_madness("he 0.0 0.0 0.0", 1)
-    compute_pno_upccd(madmolecule="madmolecule.json")
+    #run_madness("he 0.0 0.0 0.0", 1)
+    #compute_pno_upccd(madmolecule="madmolecule.json")
+    U = madtq.tq.gates.Ry(angle="a", target=0) + madtq.tq.gates.CNOT(0,1)
+    qasm = madtq.tq.export_open_qasm(U, variables={"a":1.0})
+    optimize_measurements(circuit={"circuit":qasm}, qubit_hamiltonian={"qubit_hamiltonian":"1.0*X(0)+2.0*X(0)Y(1)"})
+    optimize_measurements(qubit_hamiltonian={"qubit_hamiltonian":"1.0*X(0)+2.0*X(0)Y(1)"})
