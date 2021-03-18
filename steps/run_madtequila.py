@@ -91,9 +91,9 @@ def make_qubit_hamiltonian(madmolecule, transformation="jordanwigner", **kwargs)
 
 def load_json(x:str):
     if ".json" in x:
-        with open(geometry) as f:
-            x = json.load(f)
-        return x
+        with open(x) as f:
+            y = json.load(f)
+        return y
     elif isinstance(x, str):
         return json.loads(x)
     else:
