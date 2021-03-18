@@ -83,6 +83,9 @@ def optimize_measurements(circuit:str, hamiltonian:str):
     Use the tequila implementation of the grouping Algorithm from T.C Yen et.al. 
     circuit: open-qasm-2 string
     hamiltonian: openfermion::QubitOperator or tequila hamiltonian as string
+
+    Rerurn: A json dictionary with "measurement_count":total number of optimized measurments
+    "groupings":a list of dictionary containing 'circuit' (qasm str) and 'hamiltonian':openfermion_string
     """
 
     try: 
@@ -94,6 +97,9 @@ def optimize_measurements(circuit:str, hamiltonian:str):
     # optimize_measurements will decompose the expectation value
     # into a sum of expectation values with transformed circuits
     # and Hamiltonians that are build from Pauli-Z only
+    # in tequila this objective can be used like any other
+    # in the following we will extract it's components in order to 
+    # potentially use them outside of tequila
     E = madtq.tq.ExpectationValue(H=H, U=U, optimize_measurements=True)
 
     # now pull the circuits out and give them back as qasm lists
