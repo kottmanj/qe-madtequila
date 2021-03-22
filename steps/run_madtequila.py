@@ -35,7 +35,6 @@ def run_madness(geometry, n_pno, **kwargs):
                 atom["species"], atom["x"], atom["y"], atom["z"]
             )
 
-    kwargs = {}
     mol = madtq.run_madness(geometry=geometry_str, n_pno=n_pno, **kwargs)
     results_dict = {}
     results_dict["schema"] = SCHEMA_VERSION + "-madresults"
@@ -164,7 +163,7 @@ def compute_pyscf_energy(madmolecule, method="fci", **kwargs):
 
 
 if __name__ == "__main__":
-    run_madness("he 0.0 0.0 0.0", 1)
+    run_madness("Li 0.0 0.0 0.0\n H 0.0 0.0 1.6", 1, name="lih")
     X=compute_pyscf_energy(madmolecule="madmolecule.json", method="fci")
     print(X)
     Y=compute_pyscf_energy(madmolecule="madmolecule.json", method="ccsd")

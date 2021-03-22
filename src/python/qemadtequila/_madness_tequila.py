@@ -66,7 +66,7 @@ def compute_fci(mol, *args, **kwargs):
     e, fcivec = fci.direct_spin1.kernel(h1, h2, norb, nelec, **kwargs)
     return e + c + mol.molecule.nuclear_repulsion
 
-def run_pyscf_hf(mol, **kwargs):
+def run_pyscf_hf(mol, do_not_solve=True,  **kwargs):
     import pyscf
     c, h1, h2 = fetch_integrals(mol)
     norb = mol.n_orbitals
@@ -80,12 +80,17 @@ def run_pyscf_hf(mol, **kwargs):
     pyscf_mol = pyscf.gto.M()
     pyscf_mol.nelectron=nelec
     pyscf_mol.incore_anyway = True # ensure that custom integrals are used (hopefully)
-
+    
     mf = pyscf.scf.RHF(pyscf_mol)
     mf.get_hcore= lambda *args: h1
-    mf.get_ovlp = lambda *args: numpy.eye(nelec)
-    mf._eri = pyscf.ao2mo.restore(8, h2, nelec) # hope this works
-    mf.kernel()
+    mf.get_ovlp = lambda *args: numpy.eye(norb)
+    mf._eri = pyscf.ao2mo.restore(8, h2, norb) # hope this works
+    
+    if do_not_solve:
+        mf.mo_coeff=mo_coeff
+        mf.mo_occ=mo_occ
+    else:
+        mf.kernel(numpy.diag(mo_occ))
     
     return mf
 
@@ -166,8 +171,10 @@ class TqMadnessMoleculeEncoder(json.JSONEncoder):
     def default(self, mol):
         one_body_integrals = mol.compute_one_body_integrals()
         one_body_integrals = {"shape":list(one_body_integrals.shape), "data":[float(x) for x in one_body_integrals.flatten()]}
-        two_body_integrals = mol.compute_two_body_integrals()
-        two_body_integrals = {"shape":list(two_body_integrals.shape), "data":[float(x) for x in two_body_integrals.flatten()]}
+        eri = mol.compute_two_body_integrals()
+        eri = tq.quantumchemistry.NBodyTensor(eri, ordering="openfermion")
+        eri = eri.reorder(to="mulliken").elems
+        two_body_integrals = {"shape":list(eri.shape), "data":[float(x) for x in eri.flatten()]}
         nuc_rep = float(mol.molecule.nuclear_repulsion)
         orbital_data = self.encode_pnoinfo(mol.orbitals)
         parameters = mol.parameters.__dict__
