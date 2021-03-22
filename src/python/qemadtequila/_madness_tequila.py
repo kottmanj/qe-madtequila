@@ -115,10 +115,21 @@ def compute_pyscf_cisd(mol=None, hf=None, **kwargs):
     cisd.kernel()
     return cisd
 
+def compute_pyscf_mp2(mol=None, hf=None, **kwargs):
+    from pyscf import mp
+    if hf is None:
+        hf = compute_pyscf_hf(mol=mol, **kwargs)
+    mp2 = mp.MP2(hf)
+    mp2.kernel()
+    return mp2
+
+
 def compute_pyscf_energy(mol, method, *args, **kwargs):
     method = method.lower().strip()
     if method == "hf":
         return run_pyscf_hf(mol=mol, *args, **kwargs).e_tot
+    if method == "mp2":
+        return run_pyscf_mp2(mol=mol, *args, **kwargs).e_tot
     if method == "ccsd":
         return run_pyscf_ccsd(mol=mol, *args, **kwargs).e_tot
     elif method in ["ccsd(t)", "ccsdpt"]:
@@ -134,6 +145,7 @@ def compute_pyscf_energy(mol, method, *args, **kwargs):
         hf = run_pyscf_hf(mol, *args, **kwargs)
         result = {}
         result["hf"]=hf.e_tot
+        result["mp2"]=compute_pyscf_mp2(hf=hf, *args, **kwargs).e_tot
         result["cisd"]=compute_pyscf_cisd(hf=hf, *args, **kwargs).e_tot
         ccsd = run_pyscf_ccsd(hf=hf, *args, **kwargs)
         result["ccsd"]=ccsd.e_tot
