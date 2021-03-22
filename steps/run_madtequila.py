@@ -135,6 +135,7 @@ def optimize_measurements(qubit_hamiltonian:str, circuit:str=None):
     # now pull the circuits out and give them back as qasm lists
     # note that the measurement optimization will change the circuits (adding basis rotations)
     result = {"schema":"schema", "measurement_count":E.count_measurements()}
+
     groups = []
     for expv in E.get_expectationvalues():
         # summation doesn't do much here
@@ -148,6 +149,7 @@ def optimize_measurements(qubit_hamiltonian:str, circuit:str=None):
         f.write(json.dumps(result, indent=2))
 
     return result
+
 
 def compute_pyscf_energy(madmolecule, method="fci", **kwargs):
     # Step needs pyscf installed (will add that in next update of the image, currently it needs to be added to requirements)
@@ -186,3 +188,4 @@ if __name__ == "__main__":
     #optimize_measurements(circuit={"circuit":qasm}, qubit_hamiltonian={"qubit_hamiltonian":"1.0*X(0)+2.0*X(0)Y(1)"})
     #asd=optimize_measurements(qubit_hamiltonian={"qubit_hamiltonian":"1.0*X(0)+2.0*X(0)Y(1)"})
     #print(asd["measurement_count"])
+
