@@ -43,7 +43,123 @@ def run_madness(geometry, n_pno, mra_threshold=1.e-4, localize="boys", orthogona
     mol = tq.Molecule(geometry=geometry, n_pno=n_pno, **kwargs)
     return mol
 
+def fetch_integrals(mol, two_body_ordering="mulliken", *args, **kwargs):
+    # small helper function
+    # will be integrated in tq for next versions
+    if mol.active_space is not None and len(mol.active_space.frozen_reference_orbitals)>0:
+        c, h1, h2 = mol.molecule.get_active_space_integrals(active_indices=mol.active_space.active_orbitals,
+                                                        occupied_indices=mol.active_space.frozen_reference_orbitals)
+    else:
+        c=0.0
+        h1 = mol.compute_one_body_integrals()
+        h2 = mol.compute_two_body_integrals()
+    eri = tq.quantumchemistry.NBodyTensor(h2, ordering="openfermion")
+    eri = eri.reorder(to=two_body_ordering).elems
 
+    return c+mol.molecule.nuclear_repulsion, h1, eri
+
+def compute_fci(mol, *args, **kwargs):
+    from pyscf import fci
+    c, h1, h2 = fetch_integrals(mol)
+    norb = mol.n_orbitals
+    nelec = mol.n_electrons
+    e, fcivec = fci.direct_spin1.kernel(h1, h2, norb, nelec, **kwargs)
+    return e + c
+
+def run_pyscf_hf(mol, do_not_solve=True,  **kwargs):
+    import pyscf
+    c, h1, h2 = fetch_integrals(mol)
+    norb = mol.n_orbitals
+    nelec = mol.n_electrons
+
+    mo_coeff = numpy.eye(norb)
+    mo_occ = numpy.zeros(norb)
+    mo_occ[:nelec//2] = 2
+    
+    # probably also better for ccsd computation
+    pyscf_mol = pyscf.gto.M()
+    pyscf_mol.nelectron=nelec
+    pyscf_mol.incore_anyway = True # ensure that custom integrals are used (hopefully)
+    pyscf_mol.energy_nuc = lambda *args: c 
+
+    mf = pyscf.scf.RHF(pyscf_mol)
+    mf.get_hcore= lambda *args: h1
+    mf.get_ovlp = lambda *args: numpy.eye(norb)
+    mf._eri = pyscf.ao2mo.restore(8, h2, norb) # hope this works
+    
+    if do_not_solve:
+        mf.mo_coeff=mo_coeff
+        mf.mo_occ=mo_occ
+    else:
+        mf.kernel(numpy.diag(mo_occ))
+    
+    return mf
+
+def run_pyscf_ccsd(mol=None, hf=None, **kwargs):
+    from pyscf import cc
+    if mol is None and hf is None:
+        raise Exception("provide mol or hf")
+    if hf is None:
+        hf = run_pyscf_hf(mol, **kwargs)
+    ccsd = cc.RCCSD(hf)
+    ccsd.kernel()
+    return ccsd
+
+def compute_pscf_ccsdpt_correction(mol=None, ccsd=None, **kwargs):
+    if mol is None and ccsd is None:
+        raise Exception("provide madmolecule or ccsd object")
+    if ccsd is None:
+        ccsd = run_pyscf_ccsd(mol, **kwargs)
+    ecorr = ccsd.ccsd_t()
+    return ecorr
+
+def run_pyscf_cisd(mol=None, hf=None, **kwargs):
+    from pyscf import ci
+    if hf is None:
+        hf = compute_pyscf_hf(mol=mol, **kwargs)
+    cisd = ci.RCISD(hf)
+    cisd.kernel()
+    return cisd
+
+def run_pyscf_mp2(mol=None, hf=None, **kwargs):
+    from pyscf import mp
+    if hf is None:
+        hf = compute_pyscf_hf(mol=mol, **kwargs)
+    mp2 = mp.MP2(hf)
+    mp2.kernel()
+    return mp2
+
+
+def compute_pyscf_energy(mol, method, *args, **kwargs):
+    method = method.lower().strip()
+    if method == "hf":
+        return run_pyscf_hf(mol=mol, do_not_solve=False, *args, **kwargs).e_tot
+    if method == "mp2":
+        return run_pyscf_mp2(mol=mol, *args, **kwargs).e_tot
+    if method == "ccsd":
+        return run_pyscf_ccsd(mol=mol, *args, **kwargs).e_tot
+    elif method in ["ccsd(t)", "ccsdpt"]:
+        ccsd=run_pyscf_ccsd(mol=mol, *args, **kwargs)
+        energy = ccsd.e_tot
+        energy += compute_pscf_ccsdpt_correction(ccsd=ccsd)
+        return energy
+    elif method == "cisd":
+        return run_pyscf_cisd(mol=mol, do_not_solve=False, *args, **kwargs).e_tot
+    elif method == "fci":
+        return compute_fci(mol, *args, **kwargs)
+    elif method == "all":
+        hf = run_pyscf_hf(mol, *args, **kwargs)
+        result = {}
+        result["mp2"]=run_pyscf_mp2(hf=hf, *args, **kwargs).e_tot
+        ccsd = run_pyscf_ccsd(hf=hf, *args, **kwargs)
+        result["ccsd"]=ccsd.e_tot
+        result["ccsd(t)"]=ccsd.e_tot
+        ecorr = compute_pscf_ccsdpt_correction(ccsd=ccsd, *args, **kwargs)
+        result["ccsd(t)"] += ecorr
+        result["fci"] = compute_fci(mol=mol, *args, **kwargs)
+        return result
+    else:
+        raise Exception("unknown pyscf method: {}\nSupported: FCI, CCSD, CCSD(T)".format(method))
 ###
 #From here on: Only JSON stuff. Use mol_to_json and mol_from_json to serialize molecules
 #Works only for the madness interface
@@ -54,8 +170,10 @@ class TqMadnessMoleculeEncoder(json.JSONEncoder):
     def default(self, mol):
         one_body_integrals = mol.compute_one_body_integrals()
         one_body_integrals = {"shape":list(one_body_integrals.shape), "data":[float(x) for x in one_body_integrals.flatten()]}
-        two_body_integrals = mol.compute_two_body_integrals()
-        two_body_integrals = {"shape":list(two_body_integrals.shape), "data":[float(x) for x in two_body_integrals.flatten()]}
+        eri = mol.compute_two_body_integrals()
+        eri = tq.quantumchemistry.NBodyTensor(eri, ordering="openfermion")
+        eri = eri.reorder(to="mulliken").elems
+        two_body_integrals = {"shape":list(eri.shape), "data":[float(x) for x in eri.flatten()]}
         nuc_rep = float(mol.molecule.nuclear_repulsion)
         orbital_data = self.encode_pnoinfo(mol.orbitals)
         parameters = mol.parameters.__dict__
@@ -83,8 +201,6 @@ def mol_from_json(json_data:str, name=None, **kwargs):
     if hasattr(json_data, "lower") and ".json" in json_data.lower():
         with open(json_data, "r") as f:
             json_dict = json.load(f)
-            print(type(json_dict))
-            print(json_dict)
     elif hasattr(json_data, "lower()"):
         json_dict = json.loads(json_data)
     else:

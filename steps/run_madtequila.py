@@ -35,7 +35,6 @@ def run_madness(geometry, n_pno, **kwargs):
                 atom["species"], atom["x"], atom["y"], atom["z"]
             )
 
-    kwargs = {}
     mol = madtq.run_madness(geometry=geometry_str, n_pno=n_pno, **kwargs)
     results_dict = {}
     results_dict["schema"] = SCHEMA_VERSION + "-madresults"
@@ -135,7 +134,8 @@ def optimize_measurements(qubit_hamiltonian:str, circuit:str=None):
 
     # now pull the circuits out and give them back as qasm lists
     # note that the measurement optimization will change the circuits (adding basis rotations)
-    result = {"schema":"schema", "measurement_count":E.count_expectationvalues()}
+    result = {"schema":"schema", "measurement_count":E.count_measurements()}
+
     groups = []
     for expv in E.get_expectationvalues():
         # summation doesn't do much here
@@ -149,11 +149,43 @@ def optimize_measurements(qubit_hamiltonian:str, circuit:str=None):
         f.write(json.dumps(result, indent=2))
 
     return result
-  
+
+
+def compute_pyscf_energy(madmolecule, method="fci", **kwargs):
+    # Step needs pyscf installed (will add that in next update of the image, currently it needs to be added to requirements)
+    # not 100% sure this does what it's supposed to ... maybe be carful
+    mol = madtq.mol_from_json(madmolecule, **kwargs)
+    energy = madtq.compute_pyscf_energy(mol, method=method, **kwargs)
+    result = {"SCHEMA":"schema",
+            "info":"{} - {}/MRA-PNO({},{})".format(mol.parameters.name, "method", mol.n_electrons, 2*mol.n_orbitals),
+            "energy":energy}
+    with open("energy.json", "w") as f:
+        f.write(json.dumps(result, indent=2))
+    return energy
+
+
 if __name__ == "__main__":
-    #run_madness("he 0.0 0.0 0.0", 1)
+    run_madness("Li 0.0 0.0 0.0\n H 0.0 0.0 1.6", 1, name="lih")
+    X=compute_pyscf_energy(madmolecule="madmolecule.json", method="fci", active_orbitals=[1,2])
+    print(X)
+    Y=compute_pyscf_energy(madmolecule="madmolecule.json", method="ccsd", active_orbitals=[1,2])
+    print(Y)
+    Z=compute_pyscf_energy(madmolecule="madmolecule.json", method="ccsd(t)", active_orbitals=[1,2])
+    print(Z)
+    A=compute_pyscf_energy(madmolecule="madmolecule.json", method="all", active_orbitals=[1,2])
+    print(A)
+    
+    mol = madtq.mol_from_json("madmolecule.json", active_orbitals=[1,2])
+    print(mol)
+    v, vv = numpy.linalg.eigh(mol.make_hamiltonian().to_matrix())
+    # GS is 3-electron state
+    for i in range(5):
+        print(v[i])
+        print(madtq.tq.QubitWaveFunction(vv[:,i]))
     #compute_pno_upccd(madmolecule="madmolecule.json")
-    U = madtq.tq.gates.Ry(angle="a", target=0) + madtq.tq.gates.CNOT(0,1)
-    qasm = madtq.tq.export_open_qasm(U, variables={"a":1.0})
-    optimize_measurements(circuit={"circuit":qasm}, qubit_hamiltonian={"qubit_hamiltonian":"1.0*X(0)+2.0*X(0)Y(1)"})
-    optimize_measurements(qubit_hamiltonian={"qubit_hamiltonian":"1.0*X(0)+2.0*X(0)Y(1)"})
+    #U = madtq.tq.gates.Ry(angle="a", target=0) + madtq.tq.gates.CNOT(0,1)
+    #qasm = madtq.tq.export_open_qasm(U, variables={"a":1.0})
+    #optimize_measurements(circuit={"circuit":qasm}, qubit_hamiltonian={"qubit_hamiltonian":"1.0*X(0)+2.0*X(0)Y(1)"})
+    #asd=optimize_measurements(qubit_hamiltonian={"qubit_hamiltonian":"1.0*X(0)+2.0*X(0)Y(1)"})
+    #print(asd["measurement_count"])
+

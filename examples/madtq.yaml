@@ -32,7 +32,7 @@ steps:
         file: qe-madtequila/steps/run_madtequila.py
         function: run_madness
   inputs:
-    - geometry: "he 0.0 0.0 0.0"
+    - geometry: "Li 0.0 0.0 0.0\nH 0.0 0.0 1.6"
       type: string
     - n_pno: 1
       type: int
@@ -105,6 +105,28 @@ steps:
   outputs:
           - name: measurement_groups
             type: measurement_groups
+
+- name: compute-pyscf-energy
+  passed: [run-madness]
+  config:
+          runtime:
+                  language: python3
+                  customImage: "kottmanj/madness-tequila"
+                  imports: [qe-madtequila]
+                  parameters:
+                    file: qe-madtequila/steps/run_madtequila.py
+                    function: compute_pyscf_energy
+  inputs:
+          - madmolecule: ((run-madness.madmolecule))
+            type: madmolecule
+          - method: "all" # supporting HF, CCSD, CISD, CCSD(T), FCI; "all" gives a dictionary with MP2, CCSD, CCSD(T), FCI
+            type: string
+  outputs:
+          - name: energy
+            type: float
+
+
+
 
 types:
   - madmolecule
