@@ -43,6 +43,51 @@ def run_madness(geometry, n_pno, mra_threshold=1.e-4, localize="boys", orthogona
     mol = tq.Molecule(geometry=geometry, n_pno=n_pno, **kwargs)
     return mol
 
+def fetch_integrals(mol, two_body_ordering="mulliken", *args, **kwargs):
+    # small helper function
+    # will be integrated in tq for next versions
+    if mol.active_space is not None and len(mol.active_space.frozen_reference_orbitals)>0:
+        c, h1, h2 = mol.molecule.get_active_space_integrals(active_indices=mol.active_space.active_orbitals,
+                                                        occupied_indices=mol.active_space.frozen_reference_orbitals)
+    else:
+        c=0.0
+        h1 = mol.compute_one_body_integrals()
+        h2 = mol.compute_two_body_integrals()
+    eri = tq.quantumchemistry.NBodyTensor(h2, ordering="openfermion")
+    eri = eri.reorder(to=two_body_ordering).elems
+
+    return c, h1, eri
+
+def compute_fci(mol, *args, **kwargs):
+    from pyscf import fci
+    c, h1, h2 = fetch_integrals(mol)
+    norb = mol.n_orbitals
+    nelec = mol.n_electrons
+    e, fcivec = fci.direct_spin1.kernel(h1, h2, norb, nelec, **kwargs)
+    return e + c + mol.molecule.nuclear_repulsion
+
+def compute_ccsd(mol, **kwargs):
+    import pyscf
+    c, h1, h2 = fetch_integrals(mol)
+    norb = mol.n_orbitals
+    nelec = mol.n_electrons
+    
+    mo_coeff = numpy.eye(norb)
+    mo_occ = numpy.zeros(norb)
+    mo_occ[:nelec//2] = 2
+    
+    # pray this works
+    hf_dummy = pyscf.scf.RHF(pyscf.gto.M())
+    hf_dummy._eri = h2
+    hf_dummy.get_hcore = lambda *args: h1
+    from pyscf import cc
+    ccsd = cc.ccsd.CCSD(hf_dummy, mo_coeff=mo_coeff, mo_occ=mo_occ, **kwargs)
+    ccsd.diis_start_cycle=0 # following recommendation from pyscf doc.
+    ccsd.diis_start_energy_diff = 1e2
+    ccsd.kernel()
+    
+    return ccsd.e_tot
+
 
 ###
 #From here on: Only JSON stuff. Use mol_to_json and mol_from_json to serialize molecules
