@@ -164,16 +164,17 @@ def compute_pyscf_energy(madmolecule, method="fci", **kwargs):
 
 if __name__ == "__main__":
     run_madness("Li 0.0 0.0 0.0\n H 0.0 0.0 1.6", 1, name="lih")
-    X=compute_pyscf_energy(madmolecule="madmolecule.json", method="fci")
+    X=compute_pyscf_energy(madmolecule="madmolecule.json", method="fci", active_orbitals=[1,2])
     print(X)
-    Y=compute_pyscf_energy(madmolecule="madmolecule.json", method="ccsd")
+    Y=compute_pyscf_energy(madmolecule="madmolecule.json", method="ccsd", active_orbitals=[1,2])
     print(Y)
-    Z=compute_pyscf_energy(madmolecule="madmolecule.json", method="ccsd(t)")
+    Z=compute_pyscf_energy(madmolecule="madmolecule.json", method="ccsd(t)", active_orbitals=[1,2])
     print(Z)
-    A=compute_pyscf_energy(madmolecule="madmolecule.json", method="all")
+    A=compute_pyscf_energy(madmolecule="madmolecule.json", method="all", active_orbitals=[1,2])
     print(A)
     
-    mol = madtq.mol_from_json("madmolecule.json")
+    mol = madtq.mol_from_json("madmolecule.json", active_orbitals=[1,2])
+    print(mol)
     v, vv = numpy.linalg.eigh(mol.make_hamiltonian().to_matrix())
     # GS is 3-electron state
     for i in range(5):

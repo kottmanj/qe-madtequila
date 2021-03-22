@@ -56,7 +56,7 @@ def fetch_integrals(mol, two_body_ordering="mulliken", *args, **kwargs):
     eri = tq.quantumchemistry.NBodyTensor(h2, ordering="openfermion")
     eri = eri.reorder(to=two_body_ordering).elems
 
-    return c, h1, eri
+    return c+mol.molecule.nuclear_repulsion, h1, eri
 
 def compute_fci(mol, *args, **kwargs):
     from pyscf import fci
@@ -64,7 +64,7 @@ def compute_fci(mol, *args, **kwargs):
     norb = mol.n_orbitals
     nelec = mol.n_electrons
     e, fcivec = fci.direct_spin1.kernel(h1, h2, norb, nelec, **kwargs)
-    return e + c + mol.molecule.nuclear_repulsion
+    return e + c
 
 def run_pyscf_hf(mol, do_not_solve=True,  **kwargs):
     import pyscf
@@ -80,7 +80,8 @@ def run_pyscf_hf(mol, do_not_solve=True,  **kwargs):
     pyscf_mol = pyscf.gto.M()
     pyscf_mol.nelectron=nelec
     pyscf_mol.incore_anyway = True # ensure that custom integrals are used (hopefully)
-    
+    pyscf_mol.energy_nuc = lambda *args: c 
+
     mf = pyscf.scf.RHF(pyscf_mol)
     mf.get_hcore= lambda *args: h1
     mf.get_ovlp = lambda *args: numpy.eye(norb)
@@ -112,7 +113,7 @@ def compute_pscf_ccsdpt_correction(mol=None, ccsd=None, **kwargs):
     ecorr = ccsd.ccsd_t()
     return ecorr
 
-def compute_pyscf_cisd(mol=None, hf=None, **kwargs):
+def run_pyscf_cisd(mol=None, hf=None, **kwargs):
     from pyscf import ci
     if hf is None:
         hf = compute_pyscf_hf(mol=mol, **kwargs)
@@ -120,7 +121,7 @@ def compute_pyscf_cisd(mol=None, hf=None, **kwargs):
     cisd.kernel()
     return cisd
 
-def compute_pyscf_mp2(mol=None, hf=None, **kwargs):
+def run_pyscf_mp2(mol=None, hf=None, **kwargs):
     from pyscf import mp
     if hf is None:
         hf = compute_pyscf_hf(mol=mol, **kwargs)
@@ -132,7 +133,7 @@ def compute_pyscf_mp2(mol=None, hf=None, **kwargs):
 def compute_pyscf_energy(mol, method, *args, **kwargs):
     method = method.lower().strip()
     if method == "hf":
-        return run_pyscf_hf(mol=mol, *args, **kwargs).e_tot
+        return run_pyscf_hf(mol=mol, do_not_solve=False, *args, **kwargs).e_tot
     if method == "mp2":
         return run_pyscf_mp2(mol=mol, *args, **kwargs).e_tot
     if method == "ccsd":
@@ -143,15 +144,13 @@ def compute_pyscf_energy(mol, method, *args, **kwargs):
         energy += compute_pscf_ccsdpt_correction(ccsd=ccsd)
         return energy
     elif method == "cisd":
-        return compute_pyscf_cisd(mol=mol, *args, **kwargs).e_tot
+        return run_pyscf_cisd(mol=mol, do_not_solve=False, *args, **kwargs).e_tot
     elif method == "fci":
         return compute_fci(mol, *args, **kwargs)
     elif method == "all":
         hf = run_pyscf_hf(mol, *args, **kwargs)
         result = {}
-        result["hf"]=hf.e_tot
-        result["mp2"]=compute_pyscf_mp2(hf=hf, *args, **kwargs).e_tot
-        result["cisd"]=compute_pyscf_cisd(hf=hf, *args, **kwargs).e_tot
+        result["mp2"]=run_pyscf_mp2(hf=hf, *args, **kwargs).e_tot
         ccsd = run_pyscf_ccsd(hf=hf, *args, **kwargs)
         result["ccsd"]=ccsd.e_tot
         result["ccsd(t)"]=ccsd.e_tot
