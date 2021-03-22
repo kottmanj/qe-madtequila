@@ -7,7 +7,7 @@ import json
 import numpy
 SCHEMA_VERSION="schema"
 
-def run_madness(geometry, n_pno, mra_threshold=1.e-4, localize="boys", orthogonalization_method="cholesky", diagonal=True, maxrank=None, **kwargs):
+def run_madness(geometry, n_pno, mra_threshold=1.e-4, localize="boys", orthogonalization_method="symmetric", diagonal=True, maxrank=None, **kwargs):
     """
     geometry: a string that either points to an xyz file (e.g. geometry="my_file.xyz") or carries the molecular structure
               in xyz syntax (without the preamble, e.g. geometry="H 0.0 0.0 0.0\nH 0.0 0.0 0.7")
