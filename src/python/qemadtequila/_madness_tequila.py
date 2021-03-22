@@ -66,29 +66,84 @@ def compute_fci(mol, *args, **kwargs):
     e, fcivec = fci.direct_spin1.kernel(h1, h2, norb, nelec, **kwargs)
     return e + c + mol.molecule.nuclear_repulsion
 
-def compute_ccsd(mol, **kwargs):
+def run_pyscf_hf(mol, **kwargs):
     import pyscf
     c, h1, h2 = fetch_integrals(mol)
     norb = mol.n_orbitals
     nelec = mol.n_electrons
-    
+
     mo_coeff = numpy.eye(norb)
     mo_occ = numpy.zeros(norb)
     mo_occ[:nelec//2] = 2
     
-    # pray this works
-    hf_dummy = pyscf.scf.RHF(pyscf.gto.M())
-    hf_dummy._eri = h2
-    hf_dummy.get_hcore = lambda *args: h1
-    from pyscf import cc
-    ccsd = cc.ccsd.CCSD(hf_dummy, mo_coeff=mo_coeff, mo_occ=mo_occ, **kwargs)
-    ccsd.diis_start_cycle=0 # following recommendation from pyscf doc.
-    ccsd.diis_start_energy_diff = 1e2
-    ccsd.kernel()
+    # probably also better for ccsd computation
+    pyscf_mol = pyscf.gto.M()
+    pyscf_mol.nelectron=nelec
+    pyscf_mol.incore_anyway = True # ensure that custom integrals are used (hopefully)
+
+    mf = pyscf.scf.RHF(pyscf_mol)
+    mf.get_hcore= lambda *args: h1
+    mf.get_ovlp = lambda *args: numpy.eye(nelec)
+    mf._eri = pyscf.ao2mo.restore(8, h2, nelec) # hope this works
+    mf.kernel()
     
-    return ccsd.e_tot
+    return mf
 
+def run_pyscf_ccsd(mol=None, hf=None, **kwargs):
+    from pyscf import cc
+    if mol is None and hf is None:
+        raise Exception("provide mol or hf")
+    if hf is None:
+        hf = run_pyscf_hf(mol, **kwargs)
+    ccsd = cc.RCCSD(hf)
+    ccsd.kernel()
+    return ccsd
 
+def compute_pscf_ccsdpt_correction(mol=None, ccsd=None, **kwargs):
+    if mol is None and ccsd is None:
+        raise Exception("provide madmolecule or ccsd object")
+    if ccsd is None:
+        ccsd = run_pyscf_ccsd(mol, **kwargs)
+    ecorr = ccsd.ccsd_t()
+    return ecorr
+
+def compute_pyscf_cisd(mol=None, hf=None, **kwargs):
+    from pyscf import ci
+    if hf is None:
+        hf = compute_pyscf_hf(mol=mol, **kwargs)
+    cisd = ci.RCISD(hf)
+    cisd.kernel()
+    return cisd
+
+def compute_pyscf_energy(mol, method, *args, **kwargs):
+    method = method.lower().strip()
+    if method == "hf":
+        return run_pyscf_hf(mol=mol, *args, **kwargs).e_tot
+    if method == "ccsd":
+        return run_pyscf_ccsd(mol=mol, *args, **kwargs).e_tot
+    elif method in ["ccsd(t)", "ccsdpt"]:
+        ccsd=run_pyscf_ccsd(mol=mol, *args, **kwargs)
+        energy = ccsd.e_tot
+        energy += compute_pscf_ccsdpt_correction(ccsd=ccsd)
+        return energy
+    elif method == "cisd":
+        return compute_pyscf_cisd(mol=mol, *args, **kwargs).e_tot
+    elif method == "fci":
+        return compute_fci(mol, *args, **kwargs)
+    elif method == "all":
+        hf = run_pyscf_hf(mol, *args, **kwargs)
+        result = {}
+        result["hf"]=hf.e_tot
+        result["cisd"]=compute_pyscf_cisd(hf=hf, *args, **kwargs).e_tot
+        ccsd = run_pyscf_ccsd(hf=hf, *args, **kwargs)
+        result["ccsd"]=ccsd.e_tot
+        result["ccsd(t)"]=ccsd.e_tot
+        ecorr = compute_pscf_ccsdpt_correction(ccsd=ccsd, *args, **kwargs)
+        result["ccsd(t)"] += ecorr
+        result["fci"] = compute_fci(mol=mol, *args, **kwargs)
+        return result
+    else:
+        raise Exception("unknown pyscf method: {}\nSupported: FCI, CCSD, CCSD(T)".format(method))
 ###
 #From here on: Only JSON stuff. Use mol_to_json and mol_from_json to serialize molecules
 #Works only for the madness interface
@@ -128,8 +183,6 @@ def mol_from_json(json_data:str, name=None, **kwargs):
     if hasattr(json_data, "lower") and ".json" in json_data.lower():
         with open(json_data, "r") as f:
             json_dict = json.load(f)
-            print(type(json_dict))
-            print(json_dict)
     elif hasattr(json_data, "lower()"):
         json_dict = json.loads(json_data)
     else:

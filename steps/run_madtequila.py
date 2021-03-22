@@ -150,37 +150,36 @@ def optimize_measurements(qubit_hamiltonian:str, circuit:str=None):
 
     return result
 
-def compute_fci(madmolecule, **kwargs):
-    # Step needs pyscf installed (will add that in next update of the image, currently it needs to be added to requirements)
-    # function is halfway field-tested
-    # seems to behave consistent with direct diagonalization of the Hamiltonian
-    mol = madtq.mol_from_json(madmolecule, **kwargs)
-    energy = madtq.compute_fci(mol, **kwargs)
-    result = {"SCHEMA":"schema", "info":"{} - FCI/MRA-PNO({},{})".format(mol.parameters.name, mol.n_electrons, 2*mol.n_orbitals), "energy":energy}
-    with open("energy.json", "w") as f:
-        f.write(json.dumps(result, indent=2)) 
-    return energy
-
-def compute_ccsd(madmolecule, **kwargs):
+def compute_pyscf_energy(madmolecule, method="fci", **kwargs):
     # Step needs pyscf installed (will add that in next update of the image, currently it needs to be added to requirements)
     # not 100% sure this does what it's supposed to ... maybe be carful
     mol = madtq.mol_from_json(madmolecule, **kwargs)
-    energy = madtq.compute_ccsd(mol, **kwargs)
-    result = {"SCHEMA":"schema", 
-            "info":"{} - CCSD/MRA-PNO({},{})".format(mol.parameters.name, mol.n_electrons, 2*mol.n_orbitals), 
+    energy = madtq.compute_pyscf_energy(mol, method=method, **kwargs)
+    result = {"SCHEMA":"schema",
+            "info":"{} - {}/MRA-PNO({},{})".format(mol.parameters.name, "method", mol.n_electrons, 2*mol.n_orbitals),
             "energy":energy}
     with open("energy.json", "w") as f:
         f.write(json.dumps(result, indent=2))
     return energy
 
 
-
 if __name__ == "__main__":
     run_madness("he 0.0 0.0 0.0", 1)
-    X=compute_fci(madmolecule="madmolecule.json")
+    X=compute_pyscf_energy(madmolecule="madmolecule.json", method="fci")
     print(X)
-    Y=compute_ccsd(madmolecule="madmolecule.json")
+    Y=compute_pyscf_energy(madmolecule="madmolecule.json", method="ccsd")
     print(Y)
+    Z=compute_pyscf_energy(madmolecule="madmolecule.json", method="ccsd(t)")
+    print(Z)
+    A=compute_pyscf_energy(madmolecule="madmolecule.json", method="all")
+    print(A)
+    
+    mol = madtq.mol_from_json("madmolecule.json")
+    v, vv = numpy.linalg.eigh(mol.make_hamiltonian().to_matrix())
+    # GS is 3-electron state
+    for i in range(5):
+        print(v[i])
+        print(madtq.tq.QubitWaveFunction(vv[:,i]))
     #compute_pno_upccd(madmolecule="madmolecule.json")
     #U = madtq.tq.gates.Ry(angle="a", target=0) + madtq.tq.gates.CNOT(0,1)
     #qasm = madtq.tq.export_open_qasm(U, variables={"a":1.0})

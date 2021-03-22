@@ -105,6 +105,40 @@ steps:
   outputs:
           - name: measurement_groups
             type: measurement_groups
+- name: compute-fci
+  passed: [run-madness]
+  config:
+          runtime:
+                  language: python3
+                  customImage: "kottmanj/madness-tequila"
+                  imports: [qe-madtequila]
+                  parameters:
+                    file: qe-madtequila/steps/run_madtequila.py
+                    function: compute_fci
+  inputs:
+          - madmolecule: ((run-madness.madmolecule))
+            type: madmolecule
+  outputs:
+          - name: energy
+            type: float
+- name: compute-ccsd
+  passed: [run-madness]
+  config:
+          runtime:
+                  language: python3
+                  customImage: "kottmanj/madness-tequila"
+                  imports: [qe-madtequila]
+                  parameters:
+                    file: qe-madtequila/steps/run_madtequila.py
+                    function: compute_ccsd
+  inputs:
+          - madmolecule: ((run-madness.madmolecule))
+            type: madmolecule
+  outputs:
+          - name: energy
+            type: float
+
+
 
 types:
   - madmolecule
