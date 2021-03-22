@@ -157,7 +157,7 @@ def compute_pyscf_energy(madmolecule, method="fci", **kwargs):
     mol = madtq.mol_from_json(madmolecule, **kwargs)
     energy = madtq.compute_pyscf_energy(mol, method=method, **kwargs)
     result = {"SCHEMA":"schema",
-            "info":"{} - {}/MRA-PNO({},{})".format(mol.parameters.name, "method", mol.n_electrons, 2*mol.n_orbitals),
+            "info":"{} - {}/MRA-PNO({},{})".format(mol.parameters.name, method, mol.n_electrons, 2*mol.n_orbitals),
             "energy":energy}
     with open("energy.json", "w") as f:
         f.write(json.dumps(result, indent=2))
