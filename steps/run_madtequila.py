@@ -152,6 +152,8 @@ def optimize_measurements(qubit_hamiltonian:str, circuit:str=None):
 
 def compute_fci(madmolecule, **kwargs):
     # Step needs pyscf installed (will add that in next update of the image, currently it needs to be added to requirements)
+    # function is halfway field-tested
+    # seems to behave consistent with direct diagonalization of the Hamiltonian
     mol = madtq.mol_from_json(madmolecule, **kwargs)
     energy = madtq.compute_fci(mol, **kwargs)
     result = {"SCHEMA":"schema", "info":"{} - FCI/MRA-PNO({},{})".format(mol.parameters.name, mol.n_electrons, 2*mol.n_orbitals), "energy":energy}
@@ -161,6 +163,7 @@ def compute_fci(madmolecule, **kwargs):
 
 def compute_ccsd(madmolecule, **kwargs):
     # Step needs pyscf installed (will add that in next update of the image, currently it needs to be added to requirements)
+    # not 100% sure this does what it's supposed to ... maybe be carful
     mol = madtq.mol_from_json(madmolecule, **kwargs)
     energy = madtq.compute_ccsd(mol, **kwargs)
     result = {"SCHEMA":"schema", 
